@@ -1,0 +1,1180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SG-S20 Smart Grain Silo - 3D Simulation</title>
+<style>
+:root{--bg:#0d222b;--bg2:#0a1a21;--panel:#12303c;--panel2:#173a48;--line:#245160;--tx:#e7f1f2;--mut:#8db0b9;--gold:#e3b64f;--blue:#49c2ff;--red:#ff6a55;--grn:#6fd08c;--org:#ffa247}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--tx);font:14px/1.4 "Segoe UI",Tahoma,system-ui,sans-serif}
+header{height:54px;display:flex;align-items:center;gap:14px;padding:0 14px;border-bottom:1px solid var(--line);background:var(--bg2);overflow:hidden}
+.brand{font-size:16px;white-space:nowrap}
+.brand b{color:var(--gold);font-weight:700;margin-right:4px}
+.brand span{color:var(--mut);margin-left:8px;font-size:14px}
+.sp{flex:1}
+#dashLink{display:inline-block;padding:7px 14px;border-radius:999px;background:var(--blue);color:#04202c;font-weight:700;text-decoration:none;white-space:nowrap;animation:flash 1.4s ease-in-out infinite}
+@keyframes flash{0%,100%{box-shadow:0 0 0 0 rgba(73,194,255,.7)}50%{box-shadow:0 0 0 9px rgba(73,194,255,0);opacity:.78}}
+.pill{padding:4px 10px;border-radius:999px;background:var(--panel);border:1px solid var(--line);font-size:13px;white-space:nowrap}
+.pill.bad{border-color:var(--red);color:var(--red)}
+#app{display:grid;grid-template-columns:330px 1fr;height:calc(100% - 54px)}
+#side{overflow:auto;border-right:1px solid var(--line);background:var(--bg2)}
+details{border-bottom:1px solid var(--line)}
+summary{cursor:pointer;padding:10px 14px;font-weight:700;background:var(--panel);list-style:none}
+summary::-webkit-details-marker{display:none}
+summary span{color:var(--mut);font-weight:400;margin-left:6px}
+.body{padding:8px 14px 12px}
+.row{display:grid;grid-template-columns:1fr 62px;gap:2px 8px;align-items:center;margin:7px 0}
+.row label{grid-column:1/3;color:var(--mut);font-size:12.5px}
+.row input[type=range]{grid-column:1;width:100%;accent-color:var(--gold)}
+.row output{grid-column:2;text-align:right;font-variant-numeric:tabular-nums}
+.row select{grid-column:1/3}
+select,.btn{background:var(--panel2);color:var(--tx);border:1px solid var(--line);border-radius:8px;padding:7px 10px;font:inherit}
+.btn{cursor:pointer;margin:3px 4px 3px 0}
+.btn:hover{border-color:var(--blue)}
+.btn.on{background:var(--red);border-color:var(--red);color:#2b0803;font-weight:700}
+.btn.go{background:var(--gold);border-color:var(--gold);color:#2b2000;font-weight:700}
+.chk{display:block;margin:6px 0;color:var(--tx)}
+.note{color:var(--mut);font-size:12px;margin:6px 0}
+#stage{position:relative;min-height:0;min-width:0}
+.view{position:absolute;inset:0}
+#wrap{position:absolute;inset:0}
+#wrap canvas{display:block;width:100%;height:100%;touch-action:none;cursor:grab}
+#badges{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.hs{position:absolute;left:0;top:0;width:34px;height:34px;border-radius:50%;border:2px solid #0b1c24;background:#fff;color:#0b1c24;font-weight:800;font-size:16px;display:flex;align-items:center;justify-content:center;cursor:pointer;pointer-events:auto;box-shadow:0 0 0 3px rgba(255,255,255,.35);animation:pulse 2.2s infinite}
+.hs.sel{background:var(--gold);box-shadow:0 0 0 5px rgba(227,182,79,.5)}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 2px rgba(255,255,255,.5)}50%{box-shadow:0 0 0 8px rgba(255,255,255,0)}}
+#toasts{position:absolute;left:12px;top:12px;width:300px;display:flex;flex-direction:column;gap:8px;pointer-events:none}
+.toast{pointer-events:auto;position:relative;padding:9px 30px 9px 12px;border-radius:10px;background:rgba(11,28,36,.94);border-left:5px solid var(--blue);box-shadow:0 4px 14px rgba(0,0,0,.4)}
+.toast.warn{border-color:var(--org)}.toast.crit{border-color:var(--red)}
+.toast b{display:block}.toast span{color:var(--mut);font-size:13px}
+.toast button{position:absolute;right:6px;top:4px;background:none;border:0;color:var(--mut);font-size:18px;cursor:pointer}
+#card{position:absolute;right:12px;top:12px;width:330px;max-height:calc(100% - 90px);overflow:auto;background:rgba(11,28,36,.95);border:1px solid var(--line);border-radius:12px;padding:12px 14px;display:none}
+#card h3{margin:0 0 2px;font-size:16px}
+#card .ar{color:var(--gold);margin-bottom:6px}
+#card p{margin:6px 0;color:#c9dde1;font-size:13px}
+#card .x{position:absolute;right:8px;top:6px;background:none;border:0;color:var(--mut);font-size:22px;cursor:pointer}
+table.t{width:100%;border-collapse:collapse;font-size:13px;margin:6px 0}
+table.t td,table.t th{padding:4px 6px;border-bottom:1px solid var(--line);text-align:left}
+table.t td:last-child{text-align:right;font-variant-numeric:tabular-nums}
+.ok{color:var(--grn)}.warnc{color:var(--org)}.bad{color:var(--red)}
+#hud{position:absolute;left:12px;right:12px;bottom:10px;display:flex;flex-wrap:wrap;gap:8px;pointer-events:none}
+.chip{background:rgba(11,28,36,.88);border:1px solid var(--line);border-radius:10px;padding:5px 10px;font-size:13px}
+.chip small{display:block;color:var(--mut);font-size:11px}
+.chip b{font-variant-numeric:tabular-nums}
+#tools{position:absolute;left:12px;bottom:62px;display:flex;gap:6px}
+#viewDash{overflow:auto;padding:14px;background:var(--bg);display:none}
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.grid2{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:10px}
+.pan{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px 12px;min-width:0}
+.pan h4{margin:0 0 6px;font-size:14px}
+.pan canvas{width:100%;height:190px;display:block}
+.pan canvas.g{height:130px}
+.log{max-height:230px;overflow:auto;font-size:12.5px}
+.log div{padding:4px 0;border-bottom:1px solid var(--line)}
+.log i{font-style:normal;color:var(--mut);margin-right:6px}
+.dtop{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px}
+html,body{height:100%}
+body{display:flex;flex-direction:column}
+header{flex:none;height:auto;min-height:54px;flex-wrap:wrap;padding:6px 14px;overflow:visible}
+.brand .bt{color:var(--mut);margin-left:8px;font-size:14px}
+nav{display:flex;gap:4px;flex-wrap:wrap}
+nav a{display:flex;align-items:center;gap:6px;padding:7px 13px;border-radius:999px;color:var(--tx);text-decoration:none;white-space:nowrap;border:1px solid var(--line);background:var(--panel)}
+nav a i{font-style:normal}
+nav a.act{background:var(--gold);border-color:var(--gold);color:#2b2000;font-weight:700}
+nav a.flash{background:var(--blue);border-color:var(--blue);color:#04202c;font-weight:700;animation:flash 1.4s ease-in-out infinite}
+nav a.flash.act{animation:none;background:var(--gold);border-color:var(--gold);color:#2b2000}
+#app{display:block;position:relative;flex:1;min-height:0}
+#stage{position:absolute;inset:0}
+a.pill{color:var(--tx);text-decoration:none}
+a.pill.bad{color:var(--red)}
+#toasts{position:fixed;left:12px;top:64px;z-index:60;width:300px;display:flex;flex-direction:column;gap:8px;pointer-events:none}
+.pg{padding:18px;overflow:auto;background:var(--bg)}
+.pgin{max-width:1200px;margin:0 auto}
+.pg h2{margin:0 0 2px;font-size:22px}
+.sub{color:var(--mut);margin:0 0 14px}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(310px,1fr));gap:12px}
+.scn{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px}
+.sc{text-align:left;background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:10px 12px;color:var(--tx);font:inherit;cursor:pointer}
+.sc:hover{border-color:var(--blue)}
+.sc b{display:block;margin-bottom:2px}.sc span{color:var(--mut);font-size:12.5px}
+.fl{display:flex;gap:10px;align-items:center;margin:8px 0}
+.fl .btn{min-width:200px;margin:0}.fl span{color:var(--mut);font-size:12.5px}
+#guide{position:absolute;left:50%;top:12px;transform:translateX(-50%);width:340px;max-width:calc(100% - 24px);background:rgba(11,28,36,.95);border:1px solid var(--gold);border-radius:12px;padding:10px 14px;z-index:5}
+#guide ol{margin:6px 0 8px;padding-left:20px;color:#c9dde1;font-size:13px}
+#tools{bottom:62px}
+.pan h4 span{font-weight:400}
+@media(max-width:960px){
+ body{padding-bottom:60px}
+ nav{position:fixed;left:0;right:0;bottom:0;z-index:70;background:var(--bg2);border-top:1px solid var(--line);justify-content:space-around;flex-wrap:nowrap;gap:0;padding:4px}
+ nav a{flex-direction:column;gap:0;border:0;background:none;border-radius:8px;padding:4px 6px;font-size:11px}
+ nav a i{font-size:18px}
+ nav a.flash{background:var(--blue)}
+ .brand .bt{display:none}
+ #toasts{left:8px;right:8px;width:auto;top:60px}
+ #card{top:auto;bottom:64px;left:12px;right:12px;width:auto;max-height:45%}
+ .grid4{grid-template-columns:repeat(2,1fr)}.grid2{grid-template-columns:1fr}
+ .fl{flex-direction:column;align-items:flex-start}
+ #tools{bottom:108px}
+}
+@media(prefers-reduced-motion:reduce){#dashLink,.hs{animation:none}}
+nav{overflow-x:auto}
+.dc{border-radius:14px;padding:16px 18px;margin:10px 0;border:2px solid var(--line)}
+.dc.g{background:rgba(111,208,140,.14);border-color:var(--grn)}
+.dc.y{background:rgba(227,182,79,.15);border-color:var(--gold)}
+.dc.r{background:rgba(255,106,85,.15);border-color:var(--red)}
+.dc h3{margin:0 0 4px;font-size:26px}
+.dc p{margin:5px 0}
+.dot{display:inline-block;width:12px;height:12px;border-radius:50%;margin-right:6px;vertical-align:middle}
+.dot.g{background:var(--grn)}.dot.y{background:var(--gold)}.dot.r{background:var(--red)}
+.fm{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end}
+.fm label{display:block;color:var(--mut);font-size:12.5px;margin-bottom:3px}
+.fm input,.fm select{background:var(--panel2);color:var(--tx);border:1px solid var(--line);border-radius:8px;padding:7px 10px;font:inherit}
+.mrow{display:grid;grid-template-columns:190px 1fr;gap:10px;align-items:center;margin:9px 0}
+.mrow .bars{display:flex;flex-direction:column;gap:4px}
+.bar{height:22px;border-radius:5px;display:flex;align-items:center;padding:0 8px;font-size:12.5px;font-weight:700;white-space:nowrap;min-width:54px}
+.bar.b{background:var(--grn);color:#07220f}.bar.c{background:#9aa6ab;color:#1c2427}
+.chain{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px}
+.rtl{direction:rtl;text-align:right}
+.t tr.sel td{background:rgba(227,182,79,.12)}
+.t tr.rowc{cursor:pointer}
+.src{padding:6px 10px;border-radius:8px;background:var(--panel2);border:1px solid var(--line);font-size:12.5px;margin:8px 0;color:var(--mut)}
+@media(max-width:960px){nav{justify-content:flex-start}nav a{min-width:62px;flex:none}.mrow{grid-template-columns:1fr}}
+.flow{display:grid;grid-template-columns:1fr auto 1fr auto 1fr;gap:10px;align-items:stretch}
+.arr{align-self:center;font-size:30px;color:var(--gold)}
+.pb{height:10px;background:#1e4452;border-radius:6px;overflow:hidden;margin:6px 0 10px}
+.pb i{display:block;height:100%;background:var(--blue);width:0;transition:width .3s}
+.stg{margin:2px 0}
+.row input.num{grid-column:1/3;width:100%;background:var(--panel2);color:var(--tx);border:1px solid var(--line);border-radius:8px;padding:6px 10px;font:inherit}
+.chain5{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin-bottom:12px}
+.pan.lk{display:block;color:inherit;text-decoration:none}
+.pan.lk:hover{border-color:var(--blue)}
+.pan.lk .big{font-size:13px;color:#c9dde1;margin-top:4px}
+ol.steps{margin:6px 0 0;padding-left:20px;color:#c9dde1}
+ol.steps li{margin:5px 0}
+@media(max-width:960px){.flow{grid-template-columns:1fr}.arr{transform:rotate(90deg);text-align:center}}
+</style>
+</head>
+<body>
+<header>
+ <div class="brand"><b>SG-S20</b><span class="bt">Smart Grain Silo <span dir="rtl">الصومعة الذكية</span></span></div>
+ <nav id="nav">
+  <a href="#home"><i>🧭</i><b>Overview</b></a>
+  <a href="#soil"><i>🌱</i><b>Soil Lab</b></a>
+  <a href="#harvest"><i>🛰️</i><b>NASA Harvest</b></a>
+  <a href="#line"><i>⚗️</i><b>Seed Line</b></a>
+  <a href="#silo"><i>🏭</i><b>Silo 3D</b></a>
+  <a href="#controls"><i>🎛️</i><b>Controls</b></a>
+  <a href="#faults"><i>⚠️</i><b>Faults &amp; care</b></a>
+  <a href="#dashboard" class="flash"><i>🔗</i><b>Live IoT Dashboard</b></a>
+  <a href="#reports"><i>📋</i><b>Reports</b></a>
+ </nav>
+ <div class="sp"></div>
+ <button class="btn go" id="bPlay">Pause</button>
+ <select data-k="speed" aria-label="Simulation speed"><option value="60">1 min/s</option><option value="600">10 min/s</option><option value="3600">1 h/s</option><option value="21600">6 h/s</option></select>
+ <a id="alertCount" class="pill" href="#reports">0 alerts</a>
+ <span id="clock" class="pill"></span>
+</header>
+<div id="toasts"></div>
+<div id="app">
+ <main id="stage">
+  <section id="view3d" class="view">
+   <div id="wrap"></div>
+   <div id="badges"></div>
+   <div id="guide"><b>Start here</b>
+    <ol><li>Tap a numbered badge (1-11) to inspect a part. 8 and 9 are the sterilizer and coater on the left.</li><li><b>Soil Lab</b> and <b>NASA Harvest</b> come before the silo: treat the soil, then decide when to harvest.</li><li><b>Controls</b> and <b>Faults &amp; care</b>: change inputs and break things.</li><li><b>Dashboard</b> and <b>Reports</b>: see what happened.</li></ol>
+    <button class="btn go" id="gClose">Got it</button></div>
+   <div id="card"></div>
+   <div id="tools">
+     <button class="btn" id="bReset">Reset view</button>
+     <button class="btn" id="bArrows">Airflow arrows: on</button>
+   </div>
+   <div id="hud"></div>
+  </section>
+  <section id="viewHome" class="view pg" style="display:none"></section>
+  <section id="viewLine" class="view pg" style="display:none"></section>
+  <section id="viewSoil" class="view pg" style="display:none"></section>
+  <section id="viewHarvest" class="view pg" style="display:none"></section>
+  <section id="viewCtl" class="view pg" style="display:none"></section>
+  <section id="viewFault" class="view pg" style="display:none"></section>
+  <section id="viewDash" class="view pg" style="display:none"></section>
+  <section id="viewRep" class="view pg" style="display:none"></section>
+ </main>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+/* =====================================================================
+   SG-S20 Smart Grain Silo - simulation model + 3D scene + IoT dashboard
+   All numbers below are modelling assumptions, not measured data.
+   ===================================================================== */
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const clamp=(v,a,b)=>Math.min(b,Math.max(a,v));
+const pad2=n=>String(n).padStart(2,'0');
+const fmtClock=t=>`Day ${Math.floor(t/1440)+1}  ${pad2(Math.floor(t/60)%24)}:${pad2(Math.floor(t%60))}`;
+
+/* ---------- physics helpers ---------- */
+const EMCT=[[5,6.0],[10,6.5],[30,9],[50,11.5],[65,13.5],[75,15.5],[85,19],[100,26]]; // wheat equilibrium moisture vs RH
+function interp(tb,x){ if(x<=tb[0][0])return tb[0][1]; for(let i=1;i<tb.length;i++){ if(x<=tb[i][0]){const a=tb[i-1],b=tb[i];return a[1]+(b[1]-a[1])*(x-a[0])/(b[0]-a[0]);}} return tb[tb.length-1][1];}
+const emc=(rh,T)=>interp(EMCT,rh)-0.05*(T-25);
+function invEmc(m,T){ m=m+0.05*(T-25); if(m<=EMCT[0][1])return EMCT[0][0]; for(let i=1;i<EMCT.length;i++){ if(m<=EMCT[i][1]){const a=EMCT[i-1],b=EMCT[i];return a[0]+(b[0]-a[0])*(m-a[1])/(b[1]-a[1]);}} return 100;}
+const VT=[[0,10.0],[5,11.5],[10,12.0],[20,12.8],[50,13.2],[90,13.4],[100,13.6]]; // LiFePO4 4S, SOC% -> volts
+const voltFromSoc=s=>interp(VT,s);
+
+/* ---------- simulation state ---------- */
+const S={
+ t:8*60, playing:true, speed:600,
+ cap:20, ah:16, vAuto:true, volt:13.2, cloud:0.1,
+ ambTmean:30, ambRHmean:35, daily:true,
+ M:12.4, siloRH:55, siloT:28, fill:0.6, dust:1,
+ fanOn:10, lightOn:40, lightCycleH:4, smart:false, thr:13.5,
+ f:{exFail:false,inFail:false,humid:false}, soil:'none', coat:0, stir:0, stirOn:5, stTemp:22, stM:12, siloCap:400, vin:10,vTemp:60,vMin:15,batchKg:20,inM:11.5,nano:8,rpm:30,coatMin:10,byS:false,byC:false,rejectFail:true,autoLine:false,autoGap:60,
+ clog:0.05, clogIn:0.05, F:3, O:0, capLeft:92,
+ alertMode:false, pulse:0, pulseCool:0, pulses:0, rev:false, held:false, trayOut:false,
+ aT:30,aRH:35,sun:0,solarW:0,soc:80,exSp:0,inSp:0,flow:0,eff:0,dP:0,light:0,loadW:1.2,netA:0,solarWh:0,
+ sM:12.4,sRH:55,sT:28
+};
+S.run={solar:0,light:0,exfan:0,infan:0,mesh:0,ctrl:0,battery:0,grain:0};
+S.dev={}; ['solar','light','exfan','infan','mesh','ctrl','battery','grain'].forEach(k=>S.dev[k]={faults:0,last:'-'});
+const H=[]; let lastSample=-1;
+const L={stage:'idle',tIn:0,dur:1,seq:[],si:0,batch:null,n:0,log:[],lastEnd:-1e9,stored:0,rejected:0};
+const STG={ster:'Sterilizing',x1:'Transfer to coater',coat:'Coating',x2:'Vacuum transfer to silo',idle:'Idle'};
+const stageTxt=w=>L.stage===w?'<span class="ok">RUNNING</span>':'Idle';
+const ALOG=[]; const NLOG=[]; const act={};
+
+/* ---------- alerts ---------- */
+function toast(sev,title,msg){
+ const d=document.createElement('div'); d.className='toast '+sev;
+ d.innerHTML=`<b>${title}</b><span>${msg}</span><button aria-label="Dismiss">×</button>`;
+ d.querySelector('button').onclick=()=>d.remove();
+ const box=$('#toasts'); box.prepend(d); while(box.children.length>4)box.lastChild.remove();
+ setTimeout(()=>d.remove(),sev==='crit'?16000:9000);
+}
+function cond(key,on,sev,title,msg,dev){
+ if(on&&!act[key]){ act[key]=1; ALOG.unshift({t:S.t,sev,title,msg}); if(ALOG.length>200)ALOG.pop(); toast(sev,title,msg);
+   if(dev&&S.dev[dev]){S.dev[dev].faults++;S.dev[dev].last=fmtClock(S.t);} }
+ else if(!on&&act[key]){ act[key]=0; ALOG.unshift({t:S.t,sev:'ok',title:title+' - cleared',msg:''}); }
+}
+
+/* ---------- one simulation step (dt in sim minutes) ---------- */
+function step(dt){
+ S.t+=dt; lineStep(dt);
+ const h=(S.t/60)%24, dp=Math.sin(2*Math.PI*(h-9)/24);
+ S.aT=S.ambTmean+(S.daily?8*dp:0)-(S.f.humid?4:0);
+ S.aRH=clamp(S.ambRHmean-(S.daily?22*dp:0)+(S.f.humid?35:0),5,98);
+ S.sun=(h>6&&h<18)?Math.sin(Math.PI*(h-6)/12):0;
+ S.solarW=50*S.sun*(1-0.85*S.cloud);
+ const soc=S.ah/S.cap*100; S.soc=soc;
+ const lvd=soc<5, saver=soc<10;
+
+ // high-humidity alert mode with hysteresis
+ if(!S.alertMode&&S.M>S.thr)S.alertMode=true; else if(S.alertMode&&S.M<S.thr-0.5)S.alertMode=false;
+
+ // pulse-jet reverse airflow (auto when mesh >60% clogged)
+ S.pulseCool=Math.max(0,S.pulseCool-dt);
+ if(S.pulse>0){ S.pulse-=dt; if(S.pulse<=0){S.pulse=0;S.clog=Math.max(0.04,S.clog*0.3);S.pulses++;S.pulseCool=240;} }
+ else if(S.clog>0.6&&S.pulseCool<=0&&!lvd&&!S.f.exFail&&!S.f.inFail){ S.pulse=6; toast('info','Pulse-jet started','Triggering pulse-jet reverse airflow to blow dust off the mesh.'); }
+ S.rev=S.pulse>0;
+
+ // fan command
+ const emcA=emc(S.aRH,S.aT);
+ let want=(S.fanOn>0&&(S.t%60)<S.fanOn)||S.alertMode;
+ S.held=false;
+ if(S.smart&&want&&emcA>S.M+0.2&&S.pulse<=0){want=false;S.held=true;}
+ let cmd=want?(S.alertMode?1.3:1):0;
+ if(S.pulse>0)cmd=1;
+ if(lvd)cmd=0;
+ S.exSp=S.f.exFail?0:cmd; S.inSp=S.f.inFail?0:cmd;
+ const both=S.exSp>0&&S.inSp>0;
+ S.flow=both?(S.exSp+S.inSp)/2:0.35*(S.exSp+S.inSp)/2;
+ const air=S.flow*(1-0.7*S.clog)*(1-0.4*S.clogIn);
+ S.air=air;
+ S.dP=40*S.flow*S.flow*(1+5*S.clog+2*S.clogIn);
+ S.eff=S.flow>0?100*air/S.flow:0;
+
+ // blue light duty cycle
+ S.light=(S.lightOn>0&&(S.t%(S.lightCycleH*60))<S.lightOn&&!saver&&!lvd)?1:0;
+ S.stir=(S.stirOn>0&&(S.t%60)>=30&&(S.t%60)<30+S.stirOn&&!lvd)?1:0;
+
+ // power
+ S.loadW=1.2+6*Math.pow(S.exSp,3)+6*Math.pow(S.inSp,3)+(S.light?9:0)+(S.stir?8:0);
+ if(S.vAuto)S.volt=voltFromSoc(soc)+(S.solarW>5?0.2:0);
+ S.netA=(S.solarW*0.92-S.loadW)/Math.max(S.volt,10);
+ S.ah=clamp(S.ah+S.netA*dt/60,0,S.cap);
+ S.solarWh+=S.solarW*dt/60;
+
+ // dust on mesh and inlet filter (only while air moves)
+ S.clog=clamp(S.clog+0.0004*S.dust*S.flow*dt,0,1);
+ S.clogIn=clamp(S.clogIn+0.0002*S.dust*S.flow*dt,0,1);
+
+ // grain moisture, temperature, humidity
+ const k=0.00003+0.0011*air;
+ S.M+=k*(emcA-S.M)*dt + 0.005*S.O*dt;
+ S.M=clamp(S.M,6,26);
+ const eq=invEmc(S.M,S.siloT), w=Math.min(0.6,0.5*air);
+ const tgtRH=eq*(1-w)+S.aRH*w;
+ S.siloRH+=(tgtRH-S.siloRH)*(1-Math.exp(-0.08*dt));
+ const tgtT=S.aT+2.5*S.O+(S.light?0.8:0);
+ S.siloT+=(tgtT-S.siloT)*(1-Math.exp(-(0.002+0.01*air)*dt));
+
+ // Aspergillus risk index and biological capsules
+ const rhT=clamp((S.siloRH-65)/35,0,1), tT=clamp((S.siloT-10)/30,0,1);
+ const capEff=S.capLeft/100*(0.5+0.5*clamp((S.siloT-15)/25,0,1));
+ const growth=(0.15*rhT*tT+0.05*S.O+(S.M>S.thr?0.012:0))*(S.soil==='bio'?0.8:1)*(1-0.3*S.coat/100);
+ const decay=0.0006+0.004*S.light+0.0025*capEff+0.0008*air;
+ S.F=clamp(S.F+(growth-S.F*decay)*dt,0,100);
+ S.O=Math.max(0,S.O-(0.0003+0.0015*S.light+0.001*capEff+0.0004*S.stir)*dt);
+ S.capLeft=Math.max(0,S.capLeft-0.0025*dt*(0.5+tT));
+
+ // sensor readings (with a little noise)
+ const n=()=>Math.random()-0.5;
+ S.sM=S.M+n()*0.06; S.sRH=S.siloRH+n()*0.8; S.sT=S.siloT+n()*0.15;
+
+ // runtime counters
+ const hr=dt/60, R=S.run;
+ R.ctrl+=hr; if(S.solarW>1)R.solar+=hr; if(S.light)R.light+=hr; if(S.exSp>0)R.exfan+=hr; if(S.inSp>0)R.infan+=hr;
+ if(S.flow>0)R.mesh+=hr; R.battery+=hr; if(S.alertMode)R.grain+=hr;
+
+ // alerts
+ cond('hum',S.alertMode,'crit','High humidity alert',`Grain moisture ${S.sM.toFixed(1)}% is above ${S.thr}%. Fans on continuous overspeed (130%).`,'grain');
+ cond('asp',S.alertMode||S.F>35,'crit','Aspergillus warning','Conditions favour Aspergillus growth and mycotoxins. Inspect the grain and keep ventilation running.');
+ cond('lowbat',soc<20,'warn','Battery below 20%',`Charge is ${soc.toFixed(0)}%. Below 10% the blue light is disabled; below 5% all actuators stop.`,'battery');
+ cond('lvd',lvd,'crit','Low-voltage cutoff','Fans and light stopped to protect the LiFePO4 cells. Only the controller stays on.','battery');
+ cond('hot',S.siloT>35,'warn','Grain temperature above 35 C',`Silo temperature is ${S.siloT.toFixed(1)} C. Insect and mould activity rise quickly.`,'grain');
+ cond('exf',S.f.exFail,'crit','Exhaust fan failure','No tachometer pulse. Airflow is reduced; dust and moisture will build up.','exfan');
+ cond('inf',S.f.inFail,'crit','Inlet fan failure','No tachometer pulse from the inlet fan. Airflow is reduced.','infan');
+ cond('clog',S.clog>0.4,'warn','Dust clogging on mesh',`Mesh is ${(S.clog*100).toFixed(0)}% blocked; pressure drop is rising.`,'mesh');
+ cond('nopulse',S.clog>0.6&&S.pulse<=0&&S.pulseCool<=0&&(lvd||S.f.exFail||S.f.inFail),'crit','Pulse-jet unavailable','A fan fault or low battery is blocking the reverse-airflow cleaning. Fix the fan or recharge.','mesh');
+ cond('outb',S.O>0.3,'crit','Outbreak detected','Rapid humidity and heat rise detected near the sensor box. Aspergillus outbreak suspected.','grain');
+ cond('humid',S.f.humid,'warn','Humid weather spell','Ambient RH +35% and temperature -4 C. Ventilating with this air can wet the grain.');
+
+ // history sample every 10 sim minutes
+ const idx=Math.floor(S.t/10);
+ if(idx!==lastSample){ lastSample=idx;
+  H.push({t:S.t,M:S.sM,rh:S.sRH,aRH:S.aRH,T:S.sT,aT:S.aT,soc,volt:S.volt,sol:S.solarW,eff:S.eff,dp:S.dP,F:S.F,fan:S.flow*100});
+  if(H.length>432)H.shift(); }
+ // NASA sync every 6 sim hours
+ if(Math.floor(S.t/360)!==S.nasaIdx){ S.nasaIdx=Math.floor(S.t/360); nasaSim(); }
+}
+S.nasaIdx=Math.floor(S.t/360)-1;
+
+/* ---------- NASA sync (simulated + optional real POWER fetch) ---------- */
+function nlog(txt,cls){NLOG.unshift({t:S.t,txt,cls});if(NLOG.length>80)NLOG.pop();}
+function nasaSim(){
+ const tMax=S.ambTmean+8+(Math.random()-0.5)*2, rh=clamp(S.ambRHmean+(S.f.humid?35:0)+(Math.random()-0.5)*6,5,98);
+ const sm=(0.06+rh/600+(Math.random()-0.5)*0.02).toFixed(2);
+ nlog(`POWER daily sync ok: T2M max ${tMax.toFixed(1)} C, RH2M ${rh.toFixed(0)}%, rain 0 mm (simulated sample)`);
+ nlog(`SMAP L3 soil moisture ${sm} m3/m3 for the Luxor grid cell (simulated sample)`);
+ const risk=rh>55?'humid spell likely: prefer fan runs in the driest hours':'dry outlook: normal duty cycle';
+ nlog(`Model hint: ${risk}`,rh>55?'w':'');
+}
+async function fetchPower(){
+ nlog('Requesting real NASA POWER daily data for Luxor (25.70 N, 32.64 E)...');
+ try{
+  const end=new Date(Date.now()-3*864e5), start=new Date(end.getTime()-7*864e5);
+  const f=d=>d.toISOString().slice(0,10).replace(/-/g,'');
+  const url=`https://power.larc.nasa.gov/api/temporal/daily/point?parameters=T2M,RH2M,PRECTOTCORR&community=AG&longitude=32.64&latitude=25.70&start=${f(start)}&end=${f(end)}&format=JSON`;
+  const r=await fetch(url); const j=await r.json(); const p=j.properties.parameter;
+  const keys=Object.keys(p.T2M).reverse().filter(k=>p.T2M[k]>-900&&p.RH2M[k]>-900);
+  if(!keys.length)throw new Error('no valid days');
+  const d=keys[0];
+  S.ambTmean=p.T2M[d]; S.ambRHmean=p.RH2M[d];
+  nlog(`REAL POWER ${d}: T2M ${p.T2M[d]} C, RH2M ${p.RH2M[d]}%, rain ${p.PRECTOTCORR[d]} mm. Ambient means updated.`,'w');
+  syncUI();
+ }catch(e){ nlog('Real POWER request failed ('+e.message+'). Check your internet connection or browser CORS settings.','b'); }
+ renderDash();
+}
+
+/* ---------- sidebar controls ---------- */
+const R=(label,k,min,max,step,unit,d=0)=>`<div class="row"><label>${label}</label><input type="range" data-k="${k}" min="${min}" max="${max}" step="${step}"><output data-o="${k}" data-d="${d}" data-u="${unit}"></output></div>`;
+const C=(label,k)=>`<label class="chk"><input type="checkbox" data-k="${k}"> ${label}</label>`;
+const P=(title,ar,body,open)=>`<details ${open?'open':''}><summary>${title}<span dir="rtl">${ar}</span></summary><div class="body">${body}</div></details>`;
+const K=(title,ar,sub,body)=>`<div class="pan"><h4>${title} <span dir="rtl" style="color:var(--mut)">${ar}</span></h4><p class="note">${sub}</p>${body}</div>`;
+$('#viewCtl').innerHTML=`<div class="pgin"><h2>Controls</h2><p class="sub">Change the silo's inputs here. Changes apply instantly; watch the effect on Silo 3D or the Live IoT Dashboard.</p>
+ <div class="cards">`+
+ K('Battery &amp; solar','البطارية','12 V LiFePO4 pack with a 50 W panel. Warning below 20% charge.',
+  R('Rated capacity (Ah)','cap',5,60,1,' Ah')+R('Charge now (Ah)','ah',0,20,0.1,' Ah',1)+R('Voltage (V)','volt',10,14.6,0.05,' V',2)+C('Voltage follows charge automatically','vAuto')+R('Cloud cover','cloud',0,1,0.05,'',2))+
+ K('Grain &amp; silo','القمح والصومعة','Set the starting condition of the stored wheat.',
+  R('Grain moisture (%)','M',8,20,0.1,'%',1)+R('Silo humidity (%)','siloRH',20,95,1,'%')+R('Silo temperature (C)','siloT',10,50,0.5,' C',1)+R('Grain fill level','fill',0.05,0.95,0.05,'',2))+
+ K('Weather outside','الطقس','Daily means; the cycle option adds a realistic day / night swing.',
+  R('Ambient humidity, daily mean (%)','ambRHmean',10,90,1,'%')+R('Ambient temperature, daily mean (C)','ambTmean',10,45,0.5,' C',1)+C('Add daily temperature / humidity cycle','daily')+R('Dust level in air (x)','dust',0,10,0.5,'x',1))+
+ K('Schedules &amp; alert limit','الجداول','Fans default to 10 min per hour; blue light to 40 min every 4 h.',
+  R('Fans: minutes on per hour','fanOn',0,60,1,' min')+R('Blue light: minutes on per cycle','lightOn',0,240,5,' min')+R('Blue light: cycle length (hours)','lightCycleH',1,12,1,' h')+R('Slow stirrer: minutes on per hour','stirOn',0,30,1,' min')+R('High humidity alert threshold (%)','thr',11,16,0.1,'%',1)+C('Smart ventilation: skip fan runs when outside air is wetter than the grain','smart'))+
+ K('Simulation','المحاكاة','Speed and pause are in the top bar. Restart returns everything to the defaults.',
+  '<button class="btn" id="bRestart">Restart simulation</button>')+
+ `</div></div>`;
+
+const N=(label,k,min,max,step)=>`<div class="row"><label>${label}</label><input type="number" class="num" data-k="${k}" min="${min}" max="${max}" step="${step}"></div>`;
+$('#viewLine').innerHTML=`<div class="pgin"><h2>Seed Line <span dir="rtl" style="color:var(--gold)">خط معالجة البذور</span></h2>
+ <p class="sub">The order is fixed: <b>sterilize, then coat, then store.</b> If seeds were stored first, you would have to reopen the silo and let in air, moisture and contamination. Edit any box below and the predicted quality updates instantly. Set the speed to 1 min/s to watch a batch move.</p>
+ <div class="flow">
+  <div class="pan"><h4>1. Sterilizer <span dir="rtl">جهاز التعقيم</span></h4><div class="stg" id="lst1"></div><div class="pb"><i id="lp1"></i></div>
+   ${N('Wood vinegar concentration (%)','vin',1,30,0.5)}${N('Temperature (C)','vTemp',30,90,1)}${N('Time (min)','vMin',1,60,1)}${N('Batch size (kg)','batchKg',1,100,1)}${N('Incoming seed moisture (%)','inM',8,20,0.1)}${C('Bypass the sterilizer (test only)','byS')}</div>
+  <div class="arr">➜</div>
+  <div class="pan"><h4>2. Rotary coater <span dir="rtl">جهاز التغليف الدوار</span></h4><div class="stg" id="lst2"></div><div class="pb"><i id="lp2"></i></div>
+   ${N('Rice husk ash nano (%)','nano',1,20,0.5)}${N('Rotation (rpm)','rpm',5,80,1)}${N('Coating time (min)','coatMin',1,60,1)}${C('Bypass the coater (test only)','byC')}</div>
+  <div class="arr">➜</div>
+  <div class="pan"><h4>3. Smart silo SG-S20 <span dir="rtl">الصومعة الذكية</span></h4><div class="stg" id="lst3"></div><div class="pb"><i id="lp3"></i></div>
+   ${N('Silo capacity (kg)','siloCap',50,5000,10)}${N('Target storage temperature (C)','stTemp',15,30,1)}${N('Target storage moisture (%)','stM',10,14,0.5)}${C('Reject batches that fail quality','rejectFail')}</div>
+ </div>
+ <div class="cards" style="margin-top:12px">
+  <div class="pan"><h4>Predicted quality of the next batch</h4><div id="lPred"></div></div>
+  <div class="pan"><h4>Run the line</h4>
+   <button class="btn go" id="lStart">Start batch</button><button class="btn" id="lWatch">Watch slowly (1 min/s)</button><button class="btn" id="lEmpty">Empty silo (new season)</button>
+   ${C('Auto-run batches','autoLine')}${N('Gap between auto batches (min)','autoGap',0,600,10)}
+   <p class="note">The sterilizer and coater run on mains power. Quality numbers are model assumptions to tune against real tests.</p></div>
+  <div class="pan"><h4>Batch log</h4><div class="log" id="lLog" style="max-height:none"></div></div>
+ </div></div>`;
+$('#viewFault').innerHTML=`<div class="pgin"><h2>Faults &amp; care</h2><p class="sub">Test how the silo reacts, then fix it. Pick a ready scenario, or trigger one fault yourself.</p>
+ <div class="pan"><h4>1. Quick scenarios</h4><p class="note">Each one loads settings and takes you to the Silo 3D screen.</p><div class="scn">
+  <button class="sc pre" data-p="normal"><b>Normal day</b><span>Healthy silo, dry air, full battery. The baseline.</span></button>
+  <button class="sc pre" data-p="humid"><b>Humid week</b><span>Wet weather and 13.2% grain. Triggers the humidity alert.</span></button>
+  <button class="sc pre" data-p="fanfail"><b>Fans fail in humid weather</b><span>Worst case: both fans dead. Watch moisture and fungal risk climb.</span></button>
+  <button class="sc pre" data-p="power"><b>Power shortage</b><span>Cloudy and a nearly flat battery. Light and fans shut down.</span></button>
+  <button class="sc pre" data-p="dust"><b>Dust storm</b><span>Mesh half blocked. Pulse-jet cleaning starts.</span></button>
+  <button class="sc pre" data-p="outbreak"><b>Aspergillus outbreak</b><span>Sudden mould hot-spot near the sensor box.</span></button>
+  <button class="sc pre" data-p="nosteril"><b>Skip the sterilizer</b><span>Seeds reach the coater unsterilized. The batch should be rejected.</span></button>
+  <button class="sc pre" data-p="nocoat"><b>Skip the coater</b><span>No protective layer and no drying step. See what fails.</span></button>
+ </div></div>
+ <div class="cards" style="margin-top:12px">
+  <div class="pan"><h4>2. Trigger a fault <span dir="rtl">الأعطال</span></h4>
+   <div class="fl"><button class="btn" id="fEx">Exhaust fan failure</button><span>Top fan stops spinning.</span></div>
+   <div class="fl"><button class="btn" id="fIn">Inlet fan failure</button><span>Bottom intake fan stops.</span></div>
+   <div class="fl"><button class="btn" id="fHum">Humid weather spell</button><span>Outside air +35% humidity.</span></div>
+   <div class="fl"><button class="btn" id="fClog">Dust clogging on mesh</button><span>Mesh 85% blocked.</span></div>
+   <div class="fl"><button class="btn" id="fOut">Aspergillus outbreak</button><span>Mould hot-spot starts.</span></div>
+   <button class="btn go" id="fClear">Clear all faults</button></div>
+  <div class="pan"><h4>3. Maintenance <span dir="rtl">الصيانة</span></h4>
+   <div class="fl"><button class="btn" id="mTray">Slide mesh tray out / in</button><span>Pulls the tray through the side slot.</span></div>
+   <div class="fl"><button class="btn" id="mCaps">Replace capsules</button><span>Fresh Trichoderma + orange oil.</span></div>
+   <div class="fl"><button class="btn" id="mFilt">Clean inlet filter</button><span>Washes the cloth filter.</span></div>
+   <div class="fl"><button class="btn" id="mPulse">Run pulse-jet now</button><span>Reverse airflow to clear dust.</span></div></div>
+ </div></div>`;
+
+$('#viewRep').innerHTML=`<div class="pgin"><h2>Reports</h2><p class="sub">Which device had a problem and when, whether the project is succeeding, and every alert so far.</p>
+ <div class="pan" style="margin-bottom:12px"><h4>Project chain: soil, NASA, silo</h4><div class="log" id="dChain" style="max-height:none"></div></div>
+ <div class="cards"><div class="pan"><h4>Device status and fault report</h4><div class="log" id="dDev" style="max-height:none"></div></div>
+ <div class="pan"><h4>Alert log</h4><div class="log" id="dAlert" style="max-height:none"></div></div>
+ <div class="pan"><h4>Seed line: batch log</h4><div class="log" id="dBatch" style="max-height:none"></div></div></div></div>`;
+
+function syncUI(){
+ $$('[data-k]').forEach(el=>{ if(el._d||(el.type==='number'&&el===document.activeElement))return; const k=el.dataset.k;
+  if(k==='ah')el.max=S.cap;
+  if(el.type==='checkbox')el.checked=!!S[k]; else el.value=S[k]; });
+ $$('output[data-o]').forEach(o=>{ const v=S[o.dataset.o]; o.textContent=(+v).toFixed(+o.dataset.d)+o.dataset.u; });
+ $('#bPlay').textContent=S.playing?'Pause':'Play';
+ const tg={fEx:S.f.exFail,fIn:S.f.inFail,fHum:S.f.humid,fClog:S.clog>0.6,fOut:S.O>0.3,mTray:S.trayOut};
+ Object.keys(tg).forEach(id=>$('#'+id).classList.toggle('on',!!tg[id]));
+}
+$$('[data-k]').forEach(el=>{
+ el.addEventListener('input',()=>{ const k=el.dataset.k; const v=el.type==='checkbox'?el.checked:parseFloat(el.value); if(typeof v==='number'&&isNaN(v))return;
+  S[k]=v;
+  if(k==='cap')S.ah=Math.min(S.ah,S.cap);
+  if(k==='fill')applyFill();
+  syncUI(); });
+ el.addEventListener('pointerdown',()=>el._d=1);
+ if(el.type==='number')el.addEventListener('change',()=>{let v=parseFloat(el.value);if(isNaN(v))v=+el.min;v=clamp(v,+el.min,+el.max);S[el.dataset.k]=v;el.value=v;});
+});
+addEventListener('pointerup',()=>$$('[data-k]').forEach(e=>e._d=0));
+const on=(id,fn)=>$('#'+id).addEventListener('click',()=>{fn();syncUI();});
+on('bPlay',()=>S.playing=!S.playing);
+on('bRestart',()=>location.reload());
+on('fEx',()=>S.f.exFail=!S.f.exFail);
+on('fIn',()=>S.f.inFail=!S.f.inFail);
+on('fHum',()=>S.f.humid=!S.f.humid);
+on('fClog',()=>S.clog=S.clog>0.6?0.05:0.85);
+on('fOut',()=>{S.O=1;S.F=Math.max(S.F,40);});
+on('fClear',()=>{S.f.exFail=S.f.inFail=S.f.humid=false;S.O=0;S.clog=Math.min(S.clog,0.05);});
+on('mTray',()=>S.trayOut=!S.trayOut);
+on('mCaps',()=>{S.capLeft=100;toast('info','Capsules replaced','Fresh Trichoderma + orange-oil capsules loaded on the tray.');});
+on('mFilt',()=>{S.clogIn=0.02;toast('info','Inlet filter cleaned','Removable cloth filter washed and refitted.');});
+on('mPulse',()=>manualPulse());
+on('lStart',()=>startBatch());
+on('lWatch',()=>{S.speed=60;toast('info','Speed set to 1 min/s','Now you can watch each stage of the batch.');});
+on('lEmpty',()=>{S.fill=0.05;S.coat=0;S.F=1;applyFill();toast('info','Silo emptied','New season: the silo is empty and ready for coated seeds.');});
+function manualPulse(){
+ const lvd=S.soc<5;
+ if(lvd||S.f.exFail||S.f.inFail)toast('crit','Pulse-jet unavailable','A fan fault or low battery is blocking reverse airflow.');
+ else{S.pulse=6;toast('info','Pulse-jet started','Triggering pulse-jet reverse airflow to blow dust off the mesh.');}
+}
+
+const PRE={
+ normal:()=>{Object.assign(S,{byS:false,byC:false,M:12.4,siloRH:55,siloT:28,ambTmean:30,ambRHmean:35,dust:1,cloud:0.1,clog:0.05,clogIn:0.05,O:0,F:3,alertMode:false,pulse:0});S.f.exFail=S.f.inFail=S.f.humid=false;S.ah=S.cap*0.8;},
+ humid:()=>{PRE.normal();S.ambRHmean=65;S.f.humid=true;S.M=13.2;},
+ fanfail:()=>{PRE.normal();S.f.exFail=S.f.inFail=true;S.f.humid=true;S.M=13.0;},
+ power:()=>{PRE.normal();S.ah=S.cap*0.15;S.cloud=0.9;},
+ dust:()=>{PRE.normal();S.dust=8;S.clog=0.55;},
+ outbreak:()=>{PRE.normal();S.O=1;S.F=40;S.M=13.3;},
+ nosteril:()=>{PRE.normal();S.byS=true;if(L.stage==='idle')startBatch();},
+ nocoat:()=>{PRE.normal();S.byC=true;if(L.stage==='idle')startBatch();}
+};
+$$('.pre').forEach(b=>b.onclick=()=>{PRE[b.dataset.p]();toast('info','Scenario loaded: '+b.querySelector('b').textContent,'Watch the Silo 3D screen and the dashboard.');syncUI();location.hash=(b.dataset.p==='nosteril'||b.dataset.p==='nocoat')?'#line':'#silo';});
+$('#gClose').onclick=()=>$('#guide').style.display='none';
+
+/* ---------- hotspot data ---------- */
+const f1=(v,d=1)=>(+v).toFixed(d);
+const stat=(b,t)=>`<span class="${b?'ok':'warnc'}">${t}</span>`;
+const HS=[
+ {id:1,name:'Solar Panel (50 W)',ar:'لوح شمسي 50 واط',
+  fn:'Charges the external 12 V LiFePO4 battery and powers the fans, blue light and controller, so the silo works off-grid.',
+  spec:'Rated 50 Wp. Wired to the battery box with a green cable run down the silo wall.',
+  tele:()=>[['Output',f1(S.solarW)+' W'],['Sun height',f1(S.sun*100,0)+' %'],['Cloud cover',f1(S.cloud*100,0)+' %'],['Energy harvested',f1(S.solarWh,0)+' Wh']],act:[]},
+ {id:2,name:'Safe Blue Light 405 nm',ar:'ضوء أزرق آمن 405 نانومتر',
+  fn:'Lights the headspace on a timer to reduce surface fungi and bacteria without chemical fumigants. The anti-static sleeve prevents static build-up in dusty air.',
+  spec:'About 9 W. Default schedule: 40 min every 4 h. Switched off automatically below 10% battery.',
+  tele:()=>[['State',stat(S.light,S.light?'ON':'OFF')],['Schedule',S.lightOn+' min / '+S.lightCycleH+' h'],['Power draw',S.light?'9.0 W':'0 W'],['Runtime',f1(S.run.light)+' h']],act:[]},
+ {id:3,name:'Exhaust Fan (Low Pressure Drop)',ar:'مروحة طرد - فقد ضغط منخفض',
+  fn:'Pulls warm, humid air out through the roof duct. Runs on the duty cycle and goes to continuous overspeed when the humidity alert fires.',
+  spec:'12 V axial fan, about 6 W at full speed. Rated flow 120 m3/h.',
+  tele:()=>[['State',S.f.exFail?'<span class="bad">FAULT</span>':stat(S.exSp>0,S.exSp>0?(S.rev?'REVERSE (pulse-jet)':S.exSp>1?'OVERSPEED':'RUNNING'):'IDLE')],['Speed',f1(S.exSp*2400,0)+' rpm'],['Airflow',f1(S.air*120,0)+' m3/h'],['Pressure drop',f1(S.dP,0)+' Pa'],['Efficiency',f1(S.eff,0)+' %']],act:[]},
+ {id:4,name:'Inclined Stainless Steel Mesh (15 deg tray)',ar:'شبكة ستانلس مائلة - درج قابل للسحب',
+  fn:'Holds the biological protection capsules (Trichoderma + orange oil) in the air stream above the grain. The 15 degree tilt lets dust slide off, and the whole tray slides out through a side slot for replacement.',
+  spec:'Removable tray, single capsule layer. Dust clogging is cleared by pulse-jet reverse airflow.',
+  tele:()=>[['Tray',S.trayOut?'Pulled out':'In place'],['Capsules left',f1(S.capLeft,0)+' %'],['Mesh blocked',f1(S.clog*100,0)+' %'],['Pulse-jet',S.pulse>0?'<span class="warnc">ACTIVE</span>':'Ready'],['Pulse count',S.pulses]],
+  act:[['Slide tray out / in',()=>S.trayOut=!S.trayOut],['Replace capsules',()=>S.capLeft=100],['Run pulse-jet',manualPulse]]},
+ {id:5,name:'Inlet Fan with Outer Filter',ar:'مروحة سحب مع فلتر خارجي',
+  fn:'Pushes filtered outside air in at the bottom, forming a push-pull path with the exhaust fan. The removable cloth filter keeps dust out.',
+  spec:'12 V axial fan with washable cloth filter. Clean it when loading passes about 50%.',
+  tele:()=>[['State',S.f.inFail?'<span class="bad">FAULT</span>':stat(S.inSp>0,S.inSp>0?'RUNNING':'IDLE')],['Speed',f1(S.inSp*2400,0)+' rpm'],['Filter loading',f1(S.clogIn*100,0)+' %'],['Outside air',f1(S.aT)+' C, '+f1(S.aRH,0)+' % RH'],['Smart hold',S.held?'<span class="warnc">holding</span>':'-']],
+  act:[['Clean filter',()=>S.clogIn=0.02]]},
+ {id:6,name:'Sensor Control Arduino Box',ar:'صندوق التحكم والحساسات',
+  fn:'Reads temperature, humidity and moisture, decides when fans and light run, and sends telemetry. Mounted 15 cm above the grain surface.',
+  spec:'Arduino-class controller with DHT22-type sensor. Modes: normal, alert overspeed, power saver, low-voltage cutoff.',
+  tele:()=>[['Mode',S.soc<5?'<span class="bad">LVD cutoff</span>':S.soc<10?'<span class="warnc">Power saver</span>':S.alertMode?'<span class="bad">Alert overspeed</span>':'<span class="ok">Normal</span>'],['Grain moisture',f1(S.sM)+' %'],['Silo RH',f1(S.sRH,0)+' %'],['Silo temp',f1(S.sT)+' C'],['Fungal risk index',f1(S.F,0)+' / 100'],['Link',S.soc<5?'Low power':'OK, -62 dBm']],act:[]},
+ {id:7,name:'External 12 V LiFePO4 Battery Box',ar:'صندوق بطارية LiFePO4 خارجي',
+  fn:'Stores solar energy and feeds the fans, light and controller. A low-voltage cutoff protects the cells.',
+  spec:'12 V LiFePO4, capacity set in the sidebar. Warning at 20%, light disabled at 10%, full cutoff at 5%.',
+  tele:()=>[['Voltage',f1(S.volt,2)+' V'],['Charge',f1(S.ah)+' / '+S.cap+' Ah ('+f1(S.soc,0)+'%)'],['Net current',(S.netA>=0?'+':'')+f1(S.netA,2)+' A'],['Solar in / Load',f1(S.solarW)+' W / '+f1(S.loadW)+' W'],['Autonomy (no sun)',S.loadW>0?f1(S.ah*S.volt/S.loadW,0)+' h':'-']],act:[]},
+ {id:8,name:'Sterilizer (Wood Vinegar)',ar:'جهاز التعقيم - خل الخشب',
+  fn:'Step 1 of the seed line. Cleans the seeds of fungi and bacteria with wood vinegar before anything else touches them.',
+  spec:'Default 10% wood vinegar, 60 C, 15 min, 20 kg per batch. Every value is editable on the Seed Line screen.',
+  tele:()=>[['State',stageTxt('ster')],['Concentration',S.vin+' %'],['Temperature',S.vTemp+' C'],['Time',S.vMin+' min'],['Batch size',S.batchKg+' kg'],['Predicted kill rate',f1(predict().kill,0)+' %'],['Bypassed',S.byS?'<span class="bad">YES</span>':'No']],
+  act:[['Start batch',()=>startBatch()],['Edit settings',()=>{location.hash='#line';}]]},
+ {id:9,name:'Rotary Coater (Rice Husk Ash Nano)',ar:'جهاز التغليف الدوار - نانو رماد قشر الأرز',
+  fn:'Step 2. Tumbles the clean seeds with nano rice-husk ash so each seed gets a thin protective layer against moisture. Coating always comes after sterilizing.',
+  spec:'Default 8% nano, 30 rpm, 10 min. Editable on the Seed Line screen. The warm tumbling also dries the seeds a little.',
+  tele:()=>[['State',stageTxt('coat')],['Nano concentration',S.nano+' %'],['Rotation',S.rpm+' rpm'],['Coating time',S.coatMin+' min'],['Predicted coverage',f1(predict().cov,0)+' %'],['Seed moisture out',f1(predict().Mf)+' %'],['Bypassed',S.byC?'<span class="bad">YES</span>':'No']],
+  act:[['Start batch',()=>startBatch()],['Edit settings',()=>{location.hash='#line';}]]},
+ {id:10,name:'Seed Inlet with Rotary Valve',ar:'فتحة الدخول بصمام دوار',
+  fn:'Step 3 starts here. Sterilized, coated seeds arrive through the transparent vacuum conveyor and drop into the silo through a rotary valve that keeps outside air out.',
+  spec:'Seeds are never put back through the silo opening after storage, so no extra air or contamination gets in.',
+  tele:()=>[['Conveyor',L.stage==='x2'?'<span class="ok">Moving seeds</span>':'Idle'],['Batches stored',L.n-L.rejected],['Batches rejected',L.rejected],['Total added',f1(L.stored,0)+' kg'],['Silo level',f1(S.fill*100,0)+' %']],act:[]},
+ {id:11,name:'Slow Stirrer, Level Sensor & Auto-discharge',ar:'قلاب بطيء وحساس مستوى وتفريغ أوتوماتيكي',
+  fn:'A slow helical stirrer turns the stored seeds so no damp hot-spot forms. The level sensor reports how full the silo is. Auto-discharge empties part of the stock for packing.',
+  spec:'Stirrer default: 5 min per hour, about 8 W. Assumption: stirring speeds up the fading of a mould outbreak by about 25%.',
+  tele:()=>[['Stirrer',stat(S.stir,S.stir?'ON':'Off')],['Schedule',S.stirOn+' min / h'],['Level',f1(S.fill*100,0)+' % ('+f1(S.fill*S.siloCap,0)+' kg)'],['Coating on stock',f1(S.coat,0)+' %']],
+  act:[['Auto-discharge 10%',()=>{S.fill=Math.max(0.05,S.fill-0.1);applyFill();toast('info','Auto-discharge','About '+Math.round(0.1*S.siloCap)+' kg sent to packing.');}]]}
+];
+let selHS=null;
+function openCard(i){
+ selHS=i; const d=HS[i-1];
+ $('#card').style.display='block';
+ $('#card').innerHTML=`<button class="x" aria-label="Close">×</button><h3>${d.id}. ${d.name}</h3><div class="ar" dir="rtl">${d.ar}</div><p>${d.fn}</p><p style="color:var(--mut)">${d.spec}</p><table class="t" id="tele"></table><div id="acts"></div>`;
+ $('#card .x').onclick=closeCard;
+ d.act.forEach(a=>{const b=document.createElement('button');b.className='btn';b.textContent=a[0];b.onclick=()=>{a[1]();syncUI();updateCard();};$('#acts').appendChild(b);});
+ updateCard(); $$('.hs').forEach(e=>e.classList.toggle('sel',+e.dataset.i===i));
+ focusOn(i);
+}
+function closeCard(){selHS=null;$('#card').style.display='none';$$('.hs').forEach(e=>e.classList.remove('sel'));}
+function updateCard(){ if(!selHS)return; $('#tele').innerHTML=HS[selHS-1].tele().map(r=>`<tr><td>${r[0]}</td><td>${r[1]}</td></tr>`).join(''); }
+
+/* ---------- 3D scene ---------- */
+const wrap=$('#wrap');
+const renderer=new THREE.WebGLRenderer({antialias:true});
+renderer.setPixelRatio(Math.min(devicePixelRatio||1,2));
+wrap.appendChild(renderer.domElement);
+const scene=new THREE.Scene();
+const camera=new THREE.PerspectiveCamera(40,1,0.1,200);
+const hemi=new THREE.HemisphereLight(0xcfe8ff,0x6d6a3a,0.9); scene.add(hemi);
+const sunL=new THREE.DirectionalLight(0xfff1d0,1.0); scene.add(sunL);
+const inL=new THREE.PointLight(0xfff0d8,0.45,12); inL.position.set(0,3.2,0.5); scene.add(inL);
+const M=(c,o={})=>new THREE.MeshStandardMaterial(Object.assign({color:c,roughness:0.6,metalness:0.1},o));
+function canvasTex(w,h,draw){const c=document.createElement('canvas');c.width=w;c.height=h;draw(c.getContext('2d'),w,h);const t=new THREE.CanvasTexture(c);t.wrapS=t.wrapT=THREE.RepeatWrapping;return t;}
+
+const RAD=2, ALPHA=0.96, SH=6;                        // silo radius, cut half-angle, shell height
+const TS=ALPHA, TL=Math.PI*2-2*ALPHA;                  // cut-away wedge faces the camera (+z)
+const silo=new THREE.Group(); scene.add(silo);
+
+// ground, field, pad
+const ground=new THREE.Mesh(new THREE.CircleGeometry(70,48),M(0x8c923f,{roughness:1})); ground.rotation.x=-Math.PI/2; ground.position.y=-0.3; scene.add(ground);
+(function field(){
+ const N=6000, stalk=new THREE.CylinderGeometry(0.012,0.028,0.95,4); stalk.translate(0,0.475,0);
+ const head=new THREE.SphereGeometry(0.06,6,4); head.scale(1,2.8,1); head.translate(0,1.0,0);
+ const a=new THREE.InstancedMesh(stalk,M(0xffffff,{roughness:1}),N), b=new THREE.InstancedMesh(head,M(0xffffff,{roughness:1}),N);
+ const m=new THREE.Matrix4(), c=new THREE.Color(); let i=0;
+ while(i<N){ const x=(Math.random()-0.5)*56, z=(Math.random()-0.5)*56;
+  if(x>-12&&x<8.3&&z>-3.8&&z<4.4)continue;
+  const s=0.8+Math.random()*0.5; m.makeRotationFromEuler(new THREE.Euler((Math.random()-0.5)*0.2,Math.random()*6,(Math.random()-0.5)*0.2)); m.scale(new THREE.Vector3(s,s,s)); m.setPosition(x,-0.3,z);
+  a.setMatrixAt(i,m); b.setMatrixAt(i,m);
+  a.setColorAt(i,c.setHSL(0.17+Math.random()*0.06,0.5,0.38+Math.random()*0.1));
+  b.setColorAt(i,c.setHSL(0.12+Math.random()*0.04,0.7,0.5+Math.random()*0.1)); i++; }
+ scene.add(a,b);
+})();
+const padM=new THREE.Mesh(new THREE.BoxGeometry(19.5,0.3,7.2),M(0x9b9b98,{roughness:0.95})); padM.position.set(-1.9,-0.15,0.3); scene.add(padM);
+const shadow=new THREE.Mesh(new THREE.PlaneGeometry(7,7),new THREE.MeshBasicMaterial({map:canvasTex(128,128,(c,w,h)=>{const g=c.createRadialGradient(w/2,h/2,10,w/2,h/2,w/2);g.addColorStop(0,'rgba(0,0,0,.45)');g.addColorStop(1,'rgba(0,0,0,0)');c.fillStyle=g;c.fillRect(0,0,w,h);}),transparent:true,depthWrite:false}));
+shadow.rotation.x=-Math.PI/2; shadow.position.y=0.01; scene.add(shadow);
+
+// shell (outer + inner wall), rings, roof
+const shellO=new THREE.Mesh(new THREE.CylinderGeometry(RAD,RAD,SH,72,1,true,TS,TL),M(0xaab4ba,{metalness:0.6,roughness:0.4})); shellO.position.y=SH/2; silo.add(shellO);
+const shellI=new THREE.Mesh(new THREE.CylinderGeometry(RAD-0.03,RAD-0.03,SH,72,1,true,TS,TL),M(0xd2dadd,{roughness:0.7,side:THREE.BackSide})); shellI.position.y=SH/2; silo.add(shellI);
+[1.2,2.2,3.2,4.2,5.2].forEach(y=>{const r=new THREE.Mesh(new THREE.CylinderGeometry(RAD+0.03,RAD+0.03,0.1,72,1,true,TS,TL),M(0x8f9aa1,{metalness:0.6,roughness:0.4}));r.position.y=y;silo.add(r);});
+[-1,1].forEach(sg=>{const e=new THREE.Mesh(new THREE.BoxGeometry(0.07,SH,0.07),M(0x7c878e,{metalness:0.6}));e.position.set(sg*RAD*Math.sin(ALPHA),SH/2,RAD*Math.cos(ALPHA));silo.add(e);});
+const roofO=new THREE.Mesh(new THREE.ConeGeometry(RAD+0.25,1.5,72,1,true,TS,TL),M(0x8a949b,{metalness:0.5,roughness:0.45})); roofO.position.y=SH+0.75; silo.add(roofO);
+const roofI=new THREE.Mesh(new THREE.ConeGeometry(RAD+0.22,1.46,72,1,true,TS,TL),M(0x1a2358,{emissive:0x0a1440,side:THREE.BackSide})); roofI.position.y=SH+0.75; silo.add(roofI);
+const rim=new THREE.Mesh(new THREE.CylinderGeometry(RAD+0.27,RAD+0.27,0.14,72,1,true,TS,TL),M(0x6f7a81,{metalness:0.6})); rim.position.y=SH+0.02; silo.add(rim);
+// slot for the tray on the right wall
+const slot=new THREE.Mesh(new THREE.BoxGeometry(0.08,0.4,1.9),M(0x15191c)); slot.position.set(RAD+0.04,3.12,0); silo.add(slot);
+
+// grain: solid segment behind the cut plane + section face
+const wheatTex=canvasTex(256,256,(c,w,h)=>{c.fillStyle='#c9962f';c.fillRect(0,0,w,h);for(let i=0;i<2600;i++){c.strokeStyle=`hsl(${36+Math.random()*14},${55+Math.random()*25}%,${38+Math.random()*28}%)`;c.lineWidth=1+Math.random()*1.5;const x=Math.random()*w,y=Math.random()*h,a=Math.random()*3;c.beginPath();c.moveTo(x,y);c.lineTo(x+Math.cos(a)*7,y+Math.sin(a)*7);c.stroke();}});
+(function(){wheatTex.repeat.set(1,1);})();
+let grain, grainFace;
+(function(){
+ const sh=new THREE.Shape(); const r=RAD-0.04; let first=true;
+ for(let a=ALPHA;a<=Math.PI*2-ALPHA+1e-6;a+=0.05){const x=r*Math.sin(a),ys=-r*Math.cos(a); if(first){sh.moveTo(x,ys);first=false;}else sh.lineTo(x,ys);}
+ sh.closePath();
+ const g=new THREE.ExtrudeGeometry(sh,{depth:1,bevelEnabled:false}); g.rotateX(-Math.PI/2);
+ const tx=wheatTex.clone(); tx.needsUpdate=true; tx.repeat.set(0.6,0.6);
+ grain=new THREE.Mesh(g,M(0xffffff,{map:tx,roughness:1})); silo.add(grain);
+ const z0=(RAD-0.04)*Math.cos(ALPHA), hw=(RAD-0.04)*Math.sin(ALPHA);
+ const t2=wheatTex.clone(); t2.needsUpdate=true; t2.repeat.set(4,2);
+ grainFace=new THREE.Mesh(new THREE.PlaneGeometry(hw*2,1),M(0xffffff,{map:t2,roughness:1})); grainFace.position.set(0,0.5,z0+0.003); silo.add(grainFace);
+})();
+let grainH=2;
+function applyFill(){ grainH=S.fill*3.2; grain.scale.y=grainH; grainFace.scale.y=grainH; grainFace.position.y=grainH/2; }
+
+// 405 nm blue light
+const lightG=new THREE.Group(); lightG.position.set(0,5.25,-0.25); silo.add(lightG);
+const tubeMat=new THREE.MeshStandardMaterial({color:0x2a3a66,emissive:0x3a6bff,emissiveIntensity:0,roughness:0.3});
+const tube=new THREE.Mesh(new THREE.CylinderGeometry(0.07,0.07,1.6,16),tubeMat); tube.rotation.z=Math.PI/2; lightG.add(tube);
+const sleeve=new THREE.Mesh(new THREE.CylinderGeometry(0.11,0.11,1.7,16),new THREE.MeshStandardMaterial({color:0xffffff,transparent:true,opacity:0.18})); sleeve.rotation.z=Math.PI/2; lightG.add(sleeve);
+const shaft=new THREE.Mesh(new THREE.ConeGeometry(1.5,2.4,32,1,true),new THREE.MeshBasicMaterial({color:0x3a62ff,transparent:true,opacity:0,blending:THREE.AdditiveBlending,depthWrite:false,side:THREE.DoubleSide})); shaft.position.y=-1.2; lightG.add(shaft);
+const spot=new THREE.SpotLight(0x4a74ff,0,10,0.9,0.5,1); lightG.add(spot); spot.target.position.set(0,-4,0.3); lightG.add(spot.target);
+const blueGlow=new THREE.PointLight(0x4a74ff,0,6); lightG.add(blueGlow);
+[-0.6,0.6].forEach(x=>{const w=new THREE.Mesh(new THREE.CylinderGeometry(0.012,0.012,0.5),M(0x111111));w.position.set(x,0.25,0);lightG.add(w);});
+
+// fans
+function makeFan(r,n,col){const g=new THREE.Group();for(let i=0;i<n;i++){const p=new THREE.Group();p.rotation.z=i*Math.PI*2/n;const b=new THREE.Mesh(new THREE.BoxGeometry(r,0.13,0.02),M(col,{roughness:0.5}));b.position.x=r/2+0.04;b.rotation.x=0.55;p.add(b);g.add(p);}const hub=new THREE.Mesh(new THREE.CylinderGeometry(0.06,0.06,0.06,12),M(0x222222));hub.rotation.x=Math.PI/2;g.add(hub);return g;}
+const exG=new THREE.Group(); exG.position.set(RAD+0.95,6.35,0.25); silo.add(exG);
+exG.add(new THREE.Mesh(new THREE.BoxGeometry(0.95,0.95,0.28),M(0x2c3338,{metalness:0.4})));
+const exHole=new THREE.Mesh(new THREE.CircleGeometry(0.4,24),M(0x07090a)); exHole.position.z=0.145; exG.add(exHole);
+const exBl=makeFan(0.36,5,0xd6dde0); exBl.position.z=0.16; exG.add(exBl);
+const duct=new THREE.Mesh(new THREE.CylinderGeometry(0.28,0.28,1.0,20),M(0x9aa3a8,{metalness:0.5})); duct.rotation.z=Math.PI/2; duct.position.set(RAD-0.15,6.3,0.25); silo.add(duct);
+const inG=new THREE.Group(); inG.position.set(-RAD-0.55,0.8,0.5); silo.add(inG);
+const filt=new THREE.Mesh(new THREE.CylinderGeometry(0.46,0.28,0.75,28),M(0x9aa0a4,{roughness:1})); filt.rotation.z=Math.PI/2; inG.add(filt);
+const inBl=makeFan(0.22,5,0x4c565c); inBl.rotation.y=Math.PI/2; inBl.position.x=0.2; inG.add(inBl);
+const inDark=new THREE.Mesh(new THREE.CircleGeometry(0.3,20),M(0x0a0c0d)); inDark.rotation.y=Math.PI/2; inDark.position.x=0.5; inG.add(inDark);
+
+// tilted stainless mesh tray with capsules
+const tray=new THREE.Group(); tray.rotation.z=-15*Math.PI/180; silo.add(tray);
+const TRAY0=new THREE.Vector3(0,3.65,0), TDIR=new THREE.Vector3(Math.cos(15*Math.PI/180),-Math.sin(15*Math.PI/180),0);
+const meshTex=canvasTex(256,256,(c,w,h)=>{c.clearRect(0,0,w,h);c.strokeStyle='#d5dde0';c.lineWidth=4;for(let i=0;i<=w;i+=16){c.beginPath();c.moveTo(i,0);c.lineTo(i,h);c.stroke();c.beginPath();c.moveTo(0,i);c.lineTo(w,i);c.stroke();}});
+meshTex.repeat.set(5,5);
+const disc=new THREE.Mesh(new THREE.CircleGeometry(1.85,48),new THREE.MeshStandardMaterial({map:meshTex,transparent:true,alphaTest:0.25,side:THREE.DoubleSide,metalness:0.7,roughness:0.35})); disc.rotation.x=-Math.PI/2; tray.add(disc);
+const frame=new THREE.Mesh(new THREE.TorusGeometry(1.85,0.035,8,64),M(0xbfc8cc,{metalness:0.8,roughness:0.3})); frame.rotation.x=Math.PI/2; tray.add(frame);
+const capMat=[]; 
+for(let i=0;i<28;i++){const a=Math.random()*6.28,r=Math.sqrt(Math.random())*1.6;const m=M(0xd9913f,{roughness:0.8});capMat.push(m);const c=new THREE.Mesh(new THREE.CylinderGeometry(0.1,0.1,0.04,14),m);c.position.set(Math.cos(a)*r,0.03,Math.sin(a)*r);tray.add(c);}
+
+// Arduino sensor box (15 cm above grain)
+const ctrl=new THREE.Group(); ctrl.position.set(1.62,2.4,-0.3); silo.add(ctrl); ctrl.lookAt(0,2.4,0); ctrl.rotateY(Math.PI);
+ctrl.add(new THREE.Mesh(new THREE.BoxGeometry(0.4,0.5,0.2),M(0xd5d8d9,{roughness:0.5})));
+const led=new THREE.Mesh(new THREE.SphereGeometry(0.035,10,8),new THREE.MeshBasicMaterial({color:0x6fd08c})); led.position.set(0,0.15,0.11); ctrl.add(led);
+const ctrlWire=new THREE.Mesh(new THREE.CylinderGeometry(0.012,0.012,0.6),M(0x111111)); ctrlWire.position.set(0.1,-0.5,0); ctrl.add(ctrlWire);
+
+// solar panel + battery box + cables
+const solTex=canvasTex(256,160,(c,w,h)=>{c.fillStyle='#1b3a78';c.fillRect(0,0,w,h);c.strokeStyle='#7fa6e6';c.lineWidth=2;for(let x=0;x<=w;x+=32){c.beginPath();c.moveTo(x,0);c.lineTo(x,h);c.stroke();}for(let y=0;y<=h;y+=32){c.beginPath();c.moveTo(0,y);c.lineTo(w,y);c.stroke();}});
+const sol=new THREE.Mesh(new THREE.BoxGeometry(1.2,0.06,0.78),[M(0xbbbbbb),M(0xbbbbbb),new THREE.MeshStandardMaterial({map:solTex,metalness:0.4,roughness:0.3}),M(0x888888),M(0xbbbbbb),M(0xbbbbbb)]); sol.position.set(0,SH+1.55,0); sol.rotation.x=-0.3; silo.add(sol);
+const batt=new THREE.Mesh(new THREE.BoxGeometry(1.25,0.95,0.85),M(0x2e9a45,{roughness:0.5})); batt.position.set(4.3,0.475,1.1); silo.add(batt);
+for(let i=0;i<2;i++){const v=new THREE.Mesh(new THREE.BoxGeometry(0.3,0.04,0.02),M(0x153d1e));v.position.set(4.3,0.55+i*0.14,1.53);silo.add(v);}
+const battLed=new THREE.Mesh(new THREE.SphereGeometry(0.05,10,8),new THREE.MeshBasicMaterial({color:0x7dff9a})); battLed.position.set(4.7,0.8,1.53); silo.add(battLed);
+const jb=new THREE.Mesh(new THREE.BoxGeometry(0.4,0.7,0.3),M(0x2e9a45)); jb.position.set(2.45,1.0,0.8); silo.add(jb);
+function cable(pts,col){silo.add(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts.map(p=>new THREE.Vector3(...p))),50,0.035,6,false),M(col||0x2faa4a)));}
+cable([[3.7,0.9,1.1],[3.0,0.8,1.0],[2.5,0.9,0.85]]);
+cable([[2.45,1.3,0.75],[2.2,2.5,0.7],[2.2,5.8,0.5],[1.7,6.3,0.4],[0.9,6.8,0.25],[0.2,7.4,0.1]]);
+cable([[2.2,5.6,0.55],[2.5,6.2,0.4],[2.8,6.2,0.3]]);
+
+// airflow arrows
+const arrowMat=new THREE.MeshBasicMaterial({color:0x2ea8ff,transparent:true,opacity:0.85});
+const cone=new THREE.ConeGeometry(0.09,0.34,10);
+const arrows=[]; for(let i=0;i<42;i++){let x,z;do{x=(Math.random()-0.5)*3.2;z=-1.5+Math.random()*2.5;}while(x*x+z*z>2.6);const m=new THREE.Mesh(cone,arrowMat);m.userData={x,z,p:Math.random()};silo.add(m);arrows.push(m);}
+const inArrows=[]; for(let i=0;i<7;i++){const m=new THREE.Mesh(cone,arrowMat);m.rotation.z=-Math.PI/2;m.userData={p:i/7,y:0.55+Math.random()*0.5,z:0.2+Math.random()*0.6};silo.add(m);inArrows.push(m);}
+let showArrows=true;
+
+// ---- seed line machines: sterilizer -> rotary coater -> silo, slow stirrer, level sensor ----
+const steel=()=>M(0xb9c1c7,{metalness:0.8,roughness:0.35});
+const lbl=(txt,sub,w,h)=>new THREE.Mesh(new THREE.PlaneGeometry(w,h),new THREE.MeshBasicMaterial({map:canvasTex(256,80,(c,W,Hh)=>{c.fillStyle='#e9eef0';c.fillRect(0,0,W,Hh);c.fillStyle='#0d3a55';c.textAlign='center';c.font='bold 26px sans-serif';c.fillText(txt,W/2,32);c.font='20px sans-serif';c.fillText(sub,W/2,62);})}));
+const sterG=new THREE.Group(); sterG.position.set(-9.6,0,0.3); silo.add(sterG);
+const sBody=new THREE.Mesh(new THREE.BoxGeometry(2,2.4,1.7),steel()); sBody.position.y=1.2; sterG.add(sBody);
+const sLab=lbl('STERILIZER','wood vinegar 10%',1.6,0.5); sLab.position.set(0,1.75,0.86); sterG.add(sLab);
+const sPanel=new THREE.Mesh(new THREE.BoxGeometry(0.7,0.4,0.06),new THREE.MeshStandardMaterial({color:0x10202a,emissive:0x1a6bff,emissiveIntensity:0.2})); sPanel.position.set(-0.4,0.8,0.87); sterG.add(sPanel);
+const sLed=new THREE.Mesh(new THREE.SphereGeometry(0.05,10,8),new THREE.MeshBasicMaterial({color:0x6fd08c})); sLed.position.set(0.25,0.8,0.9); sterG.add(sLed);
+const sTank=new THREE.Mesh(new THREE.CylinderGeometry(0.28,0.28,0.4,20),steel()); sTank.position.set(0.5,2.6,0); sterG.add(sTank);
+const sGauge=new THREE.Mesh(new THREE.CylinderGeometry(0.2,0.2,0.06,20),M(0xf2f2f2)); sGauge.rotation.x=Math.PI/2; sGauge.position.set(-0.3,2.65,0.1); sterG.add(sGauge);
+const coatG=new THREE.Group(); coatG.position.set(-6.2,0,0.3); silo.add(coatG);
+const cFrame=new THREE.Mesh(new THREE.BoxGeometry(2.8,0.6,1.5),steel()); cFrame.position.y=0.3; coatG.add(cFrame);
+const cLab=lbl('ROTARY COATER','rice husk ash nano 8%',1.9,0.45); cLab.position.set(0,0.3,0.76); coatG.add(cLab);
+const cMotor=new THREE.Mesh(new THREE.BoxGeometry(0.7,0.5,0.7),M(0x2c3338,{metalness:0.5})); cMotor.position.set(0.9,0.85,0); coatG.add(cMotor);
+const drumRot=new THREE.Group(); drumRot.position.y=1.5; coatG.add(drumRot);
+const dTex=wheatTex.clone(); dTex.needsUpdate=true; dTex.repeat.set(3,1);
+const dIn=new THREE.Mesh(new THREE.CylinderGeometry(0.62,0.62,1.9,32),M(0xffffff,{map:dTex,roughness:1})); dIn.rotation.z=Math.PI/2; drumRot.add(dIn);
+for(let i=0;i<4;i++){const pg=new THREE.Group();pg.rotation.x=i*Math.PI/2;const pb=new THREE.Mesh(new THREE.BoxGeometry(1.7,0.05,0.12),steel());pb.position.y=0.6;pg.add(pb);drumRot.add(pg);}
+const dGlass=new THREE.Mesh(new THREE.CylinderGeometry(0.8,0.8,2.0,32,1,true),new THREE.MeshStandardMaterial({color:0xcfe4ee,transparent:true,opacity:0.28,roughness:0.1,side:THREE.DoubleSide})); dGlass.rotation.z=Math.PI/2; dGlass.position.y=1.5; coatG.add(dGlass);
+[-1.1,1.1].forEach(x=>{const cp=new THREE.Mesh(new THREE.CylinderGeometry(0.86,0.86,0.25,32),steel());cp.rotation.z=Math.PI/2;cp.position.set(x,1.5,0);coatG.add(cp);});
+const hopper=new THREE.Mesh(new THREE.CylinderGeometry(0.45,0.15,0.6,20),steel()); hopper.position.set(-0.9,2.65,0); coatG.add(hopper);
+const glassM=new THREE.MeshStandardMaterial({color:0xdfeff5,transparent:true,opacity:0.25,roughness:0.1});
+const V3=a=>a.map(p=>new THREE.Vector3(p[0],p[1],p[2]));
+const c1=new THREE.CatmullRomCurve3(V3([[-8.6,2.8,0.3],[-8.1,3.3,0.3],[-7.5,3.4,0.3],[-7.1,3.0,0.3]]));
+const c2=new THREE.CatmullRomCurve3(V3([[-4.95,1.5,0.3],[-4.3,1.5,0.3],[-3.6,1.9,0.3],[-3.1,3.2,0.3],[-2.7,4.3,0.3],[-2.4,4.5,0.3]]));
+silo.add(new THREE.Mesh(new THREE.TubeGeometry(c1,40,0.16,10,false),glassM),new THREE.Mesh(new THREE.TubeGeometry(c2,50,0.16,10,false),glassM));
+const valveG=new THREE.Group(); valveG.position.set(-2.2,4.5,0.3); silo.add(valveG);
+const vBody=new THREE.Mesh(new THREE.CylinderGeometry(0.3,0.3,0.4,20),steel()); vBody.rotation.z=Math.PI/2; valveG.add(vBody);
+const vVanes=new THREE.Group(); valveG.add(vVanes); for(let i=0;i<4;i++){const vb=new THREE.Mesh(new THREE.BoxGeometry(0.3,0.5,0.04),M(0x555e63));vb.rotation.x=i*Math.PI/4;vVanes.add(vb);} valveG.userData.v=vVanes;
+const seedGeo=new THREE.SphereGeometry(0.05,6,5), seedA=[], seedB=[];
+const mkSeeds=(arr,col,n)=>{const m=new THREE.MeshStandardMaterial({color:col,roughness:0.8});for(let i=0;i<n;i++){const sd=new THREE.Mesh(seedGeo,m);sd.userData.p=i/n;sd.visible=false;silo.add(sd);arr.push(sd);}};
+mkSeeds(seedA,0xd9e8a8,24); mkSeeds(seedB,0xf6f0dc,26);
+const augerG=new THREE.Group(); augerG.position.set(0,0,-0.45); silo.add(augerG);
+const aRod=new THREE.Mesh(new THREE.CylinderGeometry(0.05,0.05,2.9,10),steel()); aRod.position.y=1.65; augerG.add(aRod);
+const hPts=[]; for(let i=0;i<=120;i++){const t=i/120,a=t*Math.PI*2*5;hPts.push(new THREE.Vector3(Math.cos(a)*0.42,0.2+t*2.9,Math.sin(a)*0.42));}
+augerG.add(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(hPts),240,0.035,6,false),steel()));
+const lvlBox=new THREE.Mesh(new THREE.BoxGeometry(0.22,0.3,0.14),M(0xe0c24a)); lvlBox.position.set(1.3,3.0,-1.25); silo.add(lvlBox);
+const lvlLed=new THREE.Mesh(new THREE.SphereGeometry(0.03,8,6),new THREE.MeshBasicMaterial({color:0x6fd08c})); lvlLed.position.set(0,0.1,0.08); lvlBox.add(lvlLed);
+
+// hotspot anchors
+const anchors=[
+ [sol,[0,0.1,0]],[lightG,[-1.15,0,0.15]],[exG,[0,0.7,0.2]],[tray,[-1.25,0.1,1.0]],[inG,[-0.4,0.6,0.3]],[ctrl,[0,0.45,0.2]],[batt,[0,0.85,0]],[sterG,[0,2.9,0.1]],[coatG,[0,2.1,0]],[valveG,[-0.15,0.55,0]],[augerG,[0.6,2.5,0.3]]
+].map(([p,o])=>{const a=new THREE.Object3D();a.position.set(...o);p.add(a);return a;});
+const badges=$('#badges');
+HS.forEach(h=>{const b=document.createElement('button');b.className='hs';b.dataset.i=h.id;b.textContent=h.id;b.title=h.name;b.setAttribute('aria-label',h.name);b.onclick=()=>openCard(h.id);badges.appendChild(b);});
+
+// orbit camera (no external controls file needed)
+const cam={th:0.32,ph:1.3,r:21,tgt:new THREE.Vector3(-2.2,3.2,0),gt:new THREE.Vector3(-2.2,3.2,0),gr:21};
+function placeCam(){camera.position.set(cam.tgt.x+cam.r*Math.sin(cam.ph)*Math.sin(cam.th),cam.tgt.y+cam.r*Math.cos(cam.ph),cam.tgt.z+cam.r*Math.sin(cam.ph)*Math.cos(cam.th));camera.lookAt(cam.tgt);}
+function focusOn(i){const p=new THREE.Vector3();anchors[i-1].getWorldPosition(p);cam.gt.set(p.x*0.6,Math.max(1.5,p.y),p.z*0.4);cam.gr=Math.min(cam.gr,10);}
+const ptrs=new Map(); let pinch=0;
+const cv=renderer.domElement;
+cv.addEventListener('pointerdown',e=>{cv.setPointerCapture(e.pointerId);ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});cam.gt.copy(cam.tgt);cam.gr=cam.r;cv.style.cursor='grabbing';});
+cv.addEventListener('pointermove',e=>{const p=ptrs.get(e.pointerId);if(!p)return;
+ if(ptrs.size===1){cam.th-=(e.clientX-p.x)*0.006;cam.ph=clamp(cam.ph-(e.clientY-p.y)*0.006,0.25,1.52);}
+ p.x=e.clientX;p.y=e.clientY;
+ if(ptrs.size===2){const [a,b]=[...ptrs.values()];const d=Math.hypot(a.x-b.x,a.y-b.y);if(pinch)cam.r=cam.gr=clamp(cam.r*pinch/d,5,34);pinch=d;}});
+const up=e=>{ptrs.delete(e.pointerId);pinch=0;cv.style.cursor='grab';};
+cv.addEventListener('pointerup',up);cv.addEventListener('pointercancel',up);
+cv.addEventListener('wheel',e=>{e.preventDefault();cam.r=cam.gr=clamp(cam.r*(1+e.deltaY*0.001),5,34);},{passive:false});
+$('#bReset').onclick=()=>{cam.th=0.32;cam.ph=1.3;cam.gr=21;cam.gt.set(-2.2,3.2,0);closeCard();};
+$('#bArrows').onclick=e=>{showArrows=!showArrows;e.target.textContent='Airflow arrows: '+(showArrows?'on':'off');};
+
+function resize(){const w=wrap.clientWidth,h=wrap.clientHeight;if(!w||!h)return;renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix();}
+new ResizeObserver(resize).observe(wrap);
+
+/* ---------- animation / render loop ---------- */
+const V={ex:0,in:0,light:0,tray:0}; const tmp=new THREE.Vector3(); let last=performance.now(), view='3d';
+const skyDay=new THREE.Color(0x8ec9ea), skyNight=new THREE.Color(0x0a1428), sky=new THREE.Color();
+scene.fog=new THREE.Fog(0x8ec9ea,28,80);
+function loop(now){
+ requestAnimationFrame(loop);
+ const dr=Math.min((now-last)/1000,0.1); last=now;
+ if(S.playing){ let rem=dr*S.speed/60; let guard=0; while(rem>0&&guard++<400){const d=Math.min(5,rem);step(d);rem-=d;} }
+ if(view!=='3d')return;
+ // smoothing
+ V.ex+=(S.exSp-V.ex)*Math.min(1,dr*3); V.in+=(S.inSp-V.in)*Math.min(1,dr*3);
+ V.light+=(S.light-V.light)*Math.min(1,dr*4); V.tray+=((S.trayOut?1:0)-V.tray)*Math.min(1,dr*2.5);
+ // day / night
+ const h=(S.t/60)%24, ang=Math.PI*(h-6)/12, k=clamp(Math.sin(ang)*1.8+0.25,0.08,1);
+ sky.copy(skyNight).lerp(skyDay,k); renderer.setClearColor(sky); scene.fog.color.copy(sky);
+ hemi.intensity=0.3+0.65*k; sunL.intensity=0.1+0.95*k; sunL.position.set(-30*Math.cos(ang),30*Math.abs(Math.sin(ang))+4,18);
+ inL.intensity=0.25+0.3*k;
+ // devices
+ exBl.rotation.z-=V.ex*14*dr*(S.rev?-1:1); inBl.rotation.x+=V.in*14*dr*(S.rev?-1:1);
+ tubeMat.emissiveIntensity=2.2*V.light; shaft.material.opacity=0.13*V.light; spot.intensity=2.6*V.light; blueGlow.intensity=1.4*V.light;
+ tray.position.copy(TRAY0).addScaledVector(TDIR,V.tray*3.3);
+ const cr=S.capLeft/100; capMat.forEach(m=>m.color.setRGB(0.62+0.25*cr,0.4+0.15*cr,0.2+0.05*cr));
+ led.material.color.set(S.soc<5||S.f.exFail||S.f.inFail?0xff4a3a:S.alertMode?0xffa247:0x6fd08c);
+ battLed.material.color.set(S.soc<10?0xff4a3a:S.soc<20?0xffa247:0x7dff9a);
+ // seed line + stirrer
+ {const st=L.stage;
+  sLed.material.color.set(st==='ster'?0xffa247:0x6fd08c); sPanel.material.emissiveIntensity=st==='ster'?1.0:0.2;
+  if(st==='coat')drumRot.rotation.x+=S.rpm*0.1*dr;
+  if(st==='x2')valveG.userData.v.rotation.x+=4*dr;
+  augerG.rotation.y+=(S.stir?1:0)*0.7*dr;
+  lvlLed.material.color.set(S.fill>0.9?0xff4a3a:0x6fd08c);
+  seedA.forEach(sd=>{sd.visible=st==='x1';if(st==='x1'){sd.userData.p=(sd.userData.p+dr*0.45)%1;sd.position.copy(c1.getPointAt(sd.userData.p));sd.position.y+=Math.sin(sd.userData.p*37)*0.05;sd.position.z+=Math.cos(sd.userData.p*53)*0.05;}});
+  seedB.forEach(sd=>{sd.visible=st==='x2';if(st==='x2'){sd.userData.p=(sd.userData.p+dr*0.45)%1;sd.position.copy(c2.getPointAt(sd.userData.p));sd.position.y+=Math.sin(sd.userData.p*41)*0.05;sd.position.z+=Math.cos(sd.userData.p*47)*0.05;}});}
+ // arrows
+ const top=grainH+0.15, span=6.25-top, fl=S.air||0;
+ arrows.forEach(m=>{const u=m.userData; u.p=(u.p+(S.rev?-1:1)*dr*fl*0.28+1)%1; m.position.set(u.x,top+u.p*span,u.z); m.rotation.x=S.rev?Math.PI:0; m.visible=showArrows&&fl>0.02;});
+ arrowMat.color.set(S.rev?0xffa247:0x2ea8ff);
+ inArrows.forEach(m=>{const u=m.userData; u.p=(u.p+dr*S.inSp*0.35)%1; m.position.set(-4.7+u.p*2.4,u.y,u.z); m.visible=showArrows&&S.inSp>0.02;});
+ // camera tween + render
+ cam.tgt.lerp(cam.gt,0.08); cam.r+=(cam.gr-cam.r)*0.08; placeCam();
+ renderer.render(scene,camera);
+ // badges
+ const W=wrap.clientWidth,Hh=wrap.clientHeight;
+ $$('.hs').forEach((el,i)=>{anchors[i].getWorldPosition(tmp);tmp.project(camera);
+  el.style.display=tmp.z<1?'flex':'none'; el.style.transform=`translate(${(tmp.x*0.5+0.5)*W-17}px,${(-tmp.y*0.5+0.5)*Hh-17}px)`;});
+}
+
+/* ---------- HUD + periodic UI refresh ---------- */
+function refreshHUD(){
+ $('#clock').textContent=fmtClock(S.t);
+ const n=Object.values(act).filter(Boolean).length; const ac=$('#alertCount'); ac.textContent=n+' active alert'+(n===1?'':'s'); ac.classList.toggle('bad',n>0);
+ const chip=(l,v,bad)=>`<div class="chip"><small>${l}</small><b class="${bad?'bad':''}">${v}</b></div>`;
+ $('#hud').innerHTML=chip('Grain moisture',f1(S.sM)+' % (target '+S.stM+')',S.alertMode)+chip('Silo humidity',f1(S.sRH,0)+' %',S.sRH>75)+chip('Silo temp',f1(S.sT)+' C',S.sT>35)+chip('Battery',f1(S.soc,0)+' %  '+f1(S.volt,1)+' V',S.soc<20)+chip('Airflow',f1(S.air*120,0)+' m3/h',false)+chip('Fungal risk',f1(S.F,0)+' / 100',S.F>35);
+ updateCard(); syncUI();
+ if(view==='dash'||view==='rep')renderDash(); if(view==='line')renderLine(); if(view==='home')renderHome();
+}
+
+/* ---------- dashboard ---------- */
+let range=144;
+const DEVS=[
+ ['solar','Solar panel 50 W',()=>S.solarW>1?'Charging':'Idle (night / cloud)',()=>false],
+ ['light','Blue light 405 nm',()=>S.soc<10?'Disabled (power saver)':S.light?'ON':'Off (schedule)',()=>false],
+ ['exfan','Exhaust fan',()=>S.f.exFail?'FAULT':S.exSp>0?(S.rev?'Reverse pulse':S.exSp>1?'Overspeed':'Running'):'Idle',()=>S.f.exFail],
+ ['infan','Inlet fan + filter',()=>S.f.inFail?'FAULT':S.inSp>0?'Running':'Idle',()=>S.f.inFail],
+ ['mesh','Mesh tray + capsules',()=>S.clog>0.6?'CLOGGED':S.clog>0.4?'Clogging':'Clear',()=>S.clog>0.6],
+ ['ctrl','Arduino sensor box',()=>S.soc<5?'Low power':'Online',()=>false],
+ ['battery','LiFePO4 battery',()=>S.soc<5?'CUTOFF':S.soc<20?'LOW':'OK',()=>S.soc<20],
+ ['grain','Grain store',()=>S.alertMode?'ALERT: moisture high':S.F>35?'Fungal risk':'Safe',()=>S.alertMode||S.F>35]
+];
+$('#viewDash').innerHTML=`<div class="pgin">
+ <div class="dtop"><b style="font-size:20px">Live IoT Telemetry Dashboard</b><span class="pill" id="dClock"></span>
+  <select id="dRange"><option value="36">Last 6 h</option><option value="144" selected>Last 24 h</option><option value="432">Last 72 h</option></select>
+  <button class="btn" id="dPower">Fetch real NASA POWER (Luxor)</button></div>
+ <div class="grid4">
+  <div class="pan"><canvas class="g" id="g1"></canvas></div><div class="pan"><canvas class="g" id="g2"></canvas></div>
+  <div class="pan"><canvas class="g" id="g3"></canvas></div><div class="pan"><canvas class="g" id="g4"></canvas></div></div>
+ <div class="grid2">
+  <div class="pan"><h4>Sensor box: moisture and humidity</h4><canvas id="c1"></canvas></div>
+  <div class="pan"><h4>Sensor box: temperature (C)</h4><canvas id="c2"></canvas></div>
+  <div class="pan"><h4>Fan efficiency (%) and pressure drop (Pa)</h4><canvas id="c3"></canvas></div>
+  <div class="pan"><h4>Battery charge (%) and solar output (W)</h4><canvas id="c4"></canvas></div>
+  <div class="pan"><h4>Aspergillus risk index</h4><canvas id="c5"></canvas></div>
+  <div class="pan"><h4>NASA POWER / SMAP sync log</h4><div class="log" id="dNasa"></div><p class="note">Entries marked simulated are generated by the model. Real POWER data is daily and slightly delayed, so it is not a live forecast.</p></div>
+ </div></div>`;
+$('#dRange').onchange=e=>{range=+e.target.value;renderDash();};
+$('#dPower').onclick=fetchPower;
+
+function gauge(cv,val,min,max,label,unit,warn,dir,d=1){
+ const dpr=devicePixelRatio||1,w=cv.clientWidth,h=cv.clientHeight; if(!w)return; cv.width=w*dpr;cv.height=h*dpr;const c=cv.getContext('2d');c.scale(dpr,dpr);
+ const cx=w/2,cy=h*0.62,r=Math.min(w/2-14,h*0.55),a0=Math.PI*0.8,a1=Math.PI*2.2,f=clamp((val-min)/(max-min),0,1);
+ const bad=dir>0?val>warn:val<warn;
+ c.lineWidth=10;c.lineCap='round';c.strokeStyle='#1e4452';c.beginPath();c.arc(cx,cy,r,a0,a1);c.stroke();
+ c.strokeStyle=bad?'#ff6a55':'#49c2ff';c.beginPath();c.arc(cx,cy,r,a0,a0+(a1-a0)*Math.max(f,0.002));c.stroke();
+ c.fillStyle=bad?'#ff6a55':'#e7f1f2';c.font='bold 22px Segoe UI,Tahoma,sans-serif';c.textAlign='center';c.fillText(val.toFixed(d)+unit,cx,cy+4);
+ c.fillStyle='#8db0b9';c.font='12px Segoe UI,Tahoma,sans-serif';c.fillText(label,cx,h-8);
+}
+function chart(cv,series,o={}){
+ const dpr=devicePixelRatio||1,w=cv.clientWidth,h=cv.clientHeight; if(!w)return; cv.width=w*dpr;cv.height=h*dpr;const c=cv.getContext('2d');c.scale(dpr,dpr);
+ const data=H.slice(-range); const L=40,Rr=o.right?40:10,T=14,B=20,pw=w-L-Rr,ph=h-T-B;
+ const rng=(axis)=>{const ss=series.filter(s=>(s.axis||'l')===axis);let lo=Infinity,hi=-Infinity;data.forEach(p=>ss.forEach(s=>{lo=Math.min(lo,p[s.k]);hi=Math.max(hi,p[s.k]);}));
+  const fix=o[axis==='l'?'l':'r'];if(fix)return fix;if(!isFinite(lo))return[0,1];const m=(hi-lo)*0.15+0.5;return[lo-m,hi+m];};
+ const rl=rng('l'), rr=o.right?rng('r'):null;
+ c.strokeStyle='#245160';c.fillStyle='#8db0b9';c.font='11px Segoe UI,Tahoma,sans-serif';c.lineWidth=1;
+ for(let i=0;i<=4;i++){const y=T+ph*i/4;c.beginPath();c.moveTo(L,y);c.lineTo(L+pw,y);c.stroke();c.textAlign='right';c.fillText((rl[1]-(rl[1]-rl[0])*i/4).toFixed(rl[1]-rl[0]>20?0:1),L-4,y+4);
+  if(rr){c.textAlign='left';c.fillText((rr[1]-(rr[1]-rr[0])*i/4).toFixed(0),L+pw+4,y+4);}}
+ if(data.length>1){const t0=data[0].t,t1=data[data.length-1].t;c.textAlign='left';c.fillText(fmtClock(t0),L,h-5);c.textAlign='right';c.fillText(fmtClock(t1),L+pw,h-5);
+  if(o.thr!=null){const y=T+ph*(1-(o.thr-rl[0])/(rl[1]-rl[0]));c.strokeStyle='#ff6a55';c.setLineDash([5,4]);c.beginPath();c.moveTo(L,y);c.lineTo(L+pw,y);c.stroke();c.setLineDash([]);}
+  series.forEach((s,si)=>{const r=(s.axis==='r'&&rr)?rr:rl;c.strokeStyle=s.color;c.lineWidth=2;c.beginPath();
+   data.forEach((p,i)=>{const x=L+pw*(p.t-t0)/(t1-t0||1),y=T+ph*(1-(p[s.k]-r[0])/(r[1]-r[0]));i?c.lineTo(x,y):c.moveTo(x,y);});c.stroke();
+   c.fillStyle=s.color;c.textAlign='left';c.fillText(s.label,L+8+si*125,T+10);});}
+}
+function renderDash(){
+ $('#dClock').textContent=fmtClock(S.t); renderChain();
+ gauge($('#g1'),S.sM,8,20,'Grain moisture','%',S.thr,1);
+ gauge($('#g2'),S.sRH,20,100,'Silo humidity','%',75,1,0);
+ gauge($('#g3'),S.sT,10,50,'Silo temperature','C',35,1);
+ gauge($('#g4'),S.soc,0,100,'Battery charge','%',20,-1,0);
+ chart($('#c1'),[{k:'M',color:'#e3b64f',label:'Moisture %'},{k:'rh',color:'#49c2ff',label:'Silo RH %'},{k:'aRH',color:'#8db0b9',label:'Ambient RH %'}],{thr:S.thr});
+ chart($('#c2'),[{k:'T',color:'#ff8a5c',label:'Silo C'},{k:'aT',color:'#8db0b9',label:'Ambient C'}]);
+ chart($('#c3'),[{k:'eff',color:'#6fd08c',label:'Efficiency %'},{k:'dp',color:'#ffa247',label:'dP Pa',axis:'r'}],{l:[0,100],right:true,r:[0,Math.max(60,...H.slice(-range).map(p=>p.dp))]});
+ chart($('#c4'),[{k:'soc',color:'#6fd08c',label:'Charge %'},{k:'sol',color:'#e3b64f',label:'Solar W'}],{l:[0,100],thr:20});
+ chart($('#c5'),[{k:'F',color:'#ff6a55',label:'Risk index'}],{l:[0,100],thr:35});
+ $('#dDev').innerHTML='<table class="t"><tr><th>Device</th><th>Status</th><th>Hours on</th><th>Faults</th></tr>'+DEVS.map(d=>{const bad=d[3](),dv=S.dev[d[0]];
+  return `<tr><td>${d[1]}</td><td class="${bad?'bad':''}">${d[2]()}</td><td>${f1(S.run[d[0]])}</td><td>${dv.faults}${dv.faults?' (last '+dv.last+')':''}</td></tr>`;}).join('')+'</table>'+
+  `<p class="note">Verdict now: <b class="${S.F>35||S.alertMode?'bad':'ok'}">${S.F>70?'Project failing: grain at serious mould risk':S.F>35||S.alertMode?'Under stress: act now':'Succeeding: grain stored safely'}</b>. No device burn-out is modelled; battery cutoff protects the cells.</p>`;
+ $('#dNasa').innerHTML=NLOG.map(n=>`<div class="${n.cls==='b'?'bad':n.cls==='w'?'warnc':''}"><i>${fmtClock(n.t)}</i>${n.txt}</div>`).join('')||'<div>No sync yet.</div>';
+ $('#dAlert').innerHTML=ALOG.map(a=>`<div class="${a.sev==='crit'?'bad':a.sev==='warn'?'warnc':a.sev==='ok'?'ok':''}"><i>${fmtClock(a.t)}</i><b>${a.title}</b> ${a.msg}</div>`).join('')||'<div>No alerts yet.</div>';
+}
+
+/* ---------- screens ---------- */
+const VIEWS={home:'viewHome',soil:'viewSoil',harvest:'viewHarvest',line:'viewLine',silo:'view3d',controls:'viewCtl',faults:'viewFault',dashboard:'viewDash',reports:'viewRep'};
+function route(){
+ const h=(location.hash||'#home').slice(1), key=VIEWS[h]?h:'home';
+ view=key==='silo'?'3d':key==='dashboard'?'dash':key==='reports'?'rep':key;
+ Object.keys(VIEWS).forEach(k=>$('#'+VIEWS[k]).style.display=k===key?'block':'none');
+ $$('#nav a').forEach(a=>a.classList.toggle('act',a.getAttribute('href')==='#'+key));
+ if(view==='dash'||view==='rep')renderDash(); if(view==='3d')resize(); if(key==='harvest')renderHarvest(); if(key==='soil')renderSoil(); if(key==='line')renderLine(); if(key==='home')renderHome();
+ syncUI();
+}
+addEventListener('hashchange',route);
+
+/* ---------- NASA Harvest Advisor ---------- */
+const PLACES={luxor:['Luxor - Karnak',25.72,32.66],aswan:['Aswan',24.09,32.90],qena:['Qena',26.16,32.72],sohag:['Sohag',26.56,31.69],asyut:['Asyut',27.18,31.18],minya:['Minya',28.11,30.75],cairo:['Cairo',30.04,31.24],custom:['Custom coordinates',25.72,32.66]};
+const HV={days:[],power:[],src:'',note:'',sel:0,planned:'',place:'Luxor - Karnak',summary:null};
+const ymd=d=>d.getFullYear()+'-'+pad2(d.getMonth()+1)+'-'+pad2(d.getDate());
+const addDays=(n)=>{const d=new Date();d.setDate(d.getDate()+n);return d;};
+function sampleDays(kind){
+ const P={dry:{T:[33,34,33,32,34,35,33],RH:[30,28,32,35,30,27,29],MIN:[16,15,18,20,16,14,15],R:[0,0,0,0,0,0,0],PR:[0,0,0,0,0,0,0],W:[4,5,4,6,5,4,5]},
+  humid:{T:[29,30,31,32,33,33,34],RH:[68,63,57,50,46,44,45],MIN:[48,43,38,31,27,25,26],R:[0,0,0,0,0,0,0],PR:[10,10,5,0,0,0,0],W:[3,3,4,4,5,5,4]},
+  rain:{T:[27,26,25,27,30,31,32],RH:[74,78,76,66,58,52,48],MIN:[60,66,64,50,40,34,30],R:[1.5,6,3,0,0,0,0],PR:[60,85,70,30,10,0,0],W:[5,7,6,4,3,3,3]}}[kind];
+ const days=[],power=[];
+ for(let i=0;i<7;i++){days.push({date:ymd(addDays(i)),tmax:P.T[i]+4,tmean:P.T[i],rh:P.RH[i],rhmin:P.MIN[i],rain:P.R[i],prob:P.PR[i],wind:P.W[i]});
+  power.push({date:ymd(addDays(i-8)),T:P.T[0]-1+(i%3),RH:P.RH[0]+(i%2)*3,P:0,W:3+(i%3)});}
+ return {days,power};
+}
+async function getLive(lat,lon){
+ const om='https://api.open-meteo.com/v1/forecast?latitude='+lat+'&longitude='+lon+'&hourly=temperature_2m,relative_humidity_2m,precipitation,wind_speed_10m&daily=precipitation_probability_max&forecast_days=7&timezone=auto&wind_speed_unit=ms';
+ const r=await fetch(om); if(!r.ok)throw new Error('forecast service HTTP '+r.status);
+ const j=await r.json(), by={};
+ j.hourly.time.forEach((t,i)=>{const d=t.slice(0,10);const x=by[d]=by[d]||{T:[],RH:[],P:0,W:0};x.T.push(j.hourly.temperature_2m[i]);x.RH.push(j.hourly.relative_humidity_2m[i]);x.P+=j.hourly.precipitation[i]||0;x.W=Math.max(x.W,j.hourly.wind_speed_10m[i]);});
+ const prob={}; if(j.daily&&j.daily.time)j.daily.time.forEach((d,i)=>prob[d]=j.daily.precipitation_probability_max[i]);
+ const avg=a=>a.reduce((p,c)=>p+c,0)/a.length;
+ const days=Object.keys(by).sort().slice(0,7).map(d=>{const x=by[d];return{date:d,tmax:Math.max(...x.T),tmean:avg(x.T),rh:avg(x.RH),rhmin:Math.min(...x.RH),rain:x.P,prob:prob[d]==null?0:prob[d],wind:x.W};});
+ let power=[],note='';
+ try{
+  const f=d=>d.getFullYear()+pad2(d.getMonth()+1)+pad2(d.getDate());
+  const url='https://power.larc.nasa.gov/api/temporal/daily/point?parameters=T2M,RH2M,PRECTOTCORR,WS2M&community=AG&longitude='+lon+'&latitude='+lat+'&start='+f(addDays(-9))+'&end='+f(addDays(-2))+'&format=JSON';
+  const pr=await fetch(url); const pj=await pr.json(), q=pj.properties.parameter;
+  power=Object.keys(q.T2M).filter(k=>q.T2M[k]>-900&&q.RH2M[k]>-900).map(k=>({date:k.slice(0,4)+'-'+k.slice(4,6)+'-'+k.slice(6),T:q.T2M[k],RH:q.RH2M[k],P:q.PRECTOTCORR[k],W:q.WS2M[k]}));
+ }catch(e){note=' NASA POWER request failed ('+e.message+'); showing forecast only.';}
+ return {days,power,note};
+}
+function judge(D,i){
+ const d=D[i], reasons=[]; let lvl='g';
+ const bump=(l,t)=>{reasons.push(t); if(l==='r')lvl='r'; else if(lvl!=='r')lvl='y';};
+ let rainy=false,light=false;
+ for(let k=i;k<Math.min(D.length,i+3);k++){const x=D[k]; if(x.rain>=1||x.prob>=60)rainy=true; else if(x.rain>0.2||x.prob>=20)light=true;}
+ if(d.tmax>40)bump('r','Temperature above 40 C');
+ if(d.rh>70)bump('r','Humidity above 70%');
+ if(rainy)bump('r','Rain expected within 3 days');
+ if(d.rh>=55&&d.rh<=70)bump('y','Humidity 55-70%');
+ if(light&&!rainy)bump('y','Small chance of rain within 3 days');
+ if(d.tmean<25)bump('y','Cool day (mean below 25 C)');
+ if(d.tmean>35&&d.tmax<=40)bump('y','Hot day (mean above 35 C)');
+ if(!reasons.length)reasons.push('Dry air, comfortable temperature, no rain for 3 days');
+ return {lvl,reasons};
+}
+function fanHours(d){
+ const T=d.tmean, M0=Math.max(9,emc(d.rh,T)+1.5), target=12.5;
+ if(M0<=target)return {M0,hours:0};
+ const Eq=emc(d.rhmin,T); if(Eq>=target-0.3)return {M0,hours:null};
+ return {M0,hours:Math.log((M0-Eq)/(target-Eq))/(0.0011*60)};
+}
+const arD=n=>n===1?'يوم':n===2?'يومين':n+' أيام';
+const hrsAr=f=>f.hours==null?'مش هينفع تجفيف بالهوا ده (محتاج مجفف أو استنى)':f.hours<0.5?'مفيش تجفيف مطلوب':'حوالي '+Math.round(f.hours)+' ساعة';
+const LV={g:'GREEN',y:'YELLOW',r:'RED'};
+function buildHarvestUI(){
+ $('#viewHarvest').innerHTML=`<div class="pgin"><h2>NASA Harvest Advisor <span dir="rtl" style="color:var(--gold)">مستشار الحصاد</span></h2>
+ <p class="sub">Pick the place and the planned harvest date. The app reads weather data and tells you: harvest now, wait, or do not harvest, then links the answer to the silo.</p>
+ <div class="pan"><h4>1. Choose</h4><div class="fm">
+  <div><label>Location</label><select id="hPlace">${Object.keys(PLACES).map(k=>`<option value="${k}">${PLACES[k][0]}</option>`).join('')}</select></div>
+  <div id="hCust" style="display:none"><label>Latitude / longitude</label><input id="hLat" size="7" value="25.72"> <input id="hLon" size="7" value="32.66"></div>
+  <div><label>Crop</label><select id="hCrop"><option>Wheat</option></select></div>
+  <div><label>Planned harvest date</label><input type="date" id="hDate"></div>
+  <div><label>Data source</label><select id="hSrc"><option value="live">Live: NASA POWER + forecast</option><option value="dry">Sample A: dry and hot</option><option value="humid">Sample B: humid, then drying</option><option value="rain">Sample C: rainy week</option></select></div>
+  <button class="btn go" id="hGo">Get data &amp; advise</button></div>
+  <div class="src" id="hSrcNote"></div></div>
+ <div id="hOut"></div></div>`;
+ $('#hDate').value=ymd(addDays(2)); HV.planned=$('#hDate').value;
+ $('#hPlace').onchange=()=>{$('#hCust').style.display=$('#hPlace').value==='custom'?'block':'none';};
+ $('#hDate').onchange=()=>{HV.planned=$('#hDate').value;renderHarvest();};
+ $('#hGo').onclick=runHarvest;
+ const s=sampleDays('humid'); HV.days=s.days; HV.power=s.power; HV.src='Sample B (demo data, not live)'; HV.sel=judgeBest(s.days); HV.place='Luxor - Karnak';
+}
+function judgeBest(D){const J=D.map((_,i)=>judge(D,i));const b=J.findIndex(j=>j.lvl==='g');return b>=0?b:0;}
+async function runHarvest(){
+ const src=$('#hSrc').value, key=$('#hPlace').value; HV.planned=$('#hDate').value;
+ let lat=PLACES[key][1],lon=PLACES[key][2]; if(key==='custom'){lat=parseFloat($('#hLat').value);lon=parseFloat($('#hLon').value);}
+ HV.place=PLACES[key][0]; const btn=$('#hGo'); btn.disabled=true; btn.textContent='Loading...';
+ try{
+  if(src==='live'){const r=await getLive(lat,lon);if(!r.days.length)throw new Error('no data returned');HV.days=r.days;HV.power=r.power;HV.note=r.note;HV.src='Live: Open-Meteo forecast + NASA POWER observed ('+lat+', '+lon+')';}
+  else{const r=sampleDays(src);HV.days=r.days;HV.power=r.power;HV.note='';HV.src={dry:'Sample A (demo data)',humid:'Sample B (demo data)',rain:'Sample C (demo data)'}[src];}
+ }catch(e){const r=sampleDays('humid');HV.days=r.days;HV.power=r.power;HV.src='Sample B (demo data) - live request failed';HV.note=' Reason: '+e.message+'. Check the internet connection, then try again.';}
+ HV.sel=judgeBest(HV.days); btn.disabled=false; btn.textContent='Get data & advise'; renderHarvest();
+}
+function renderHarvest(){
+ const D=HV.days, out=$('#hOut'); if(!out||!D.length)return;
+ $('#hSrcNote').innerHTML='Data: <b>'+HV.src+'</b> for '+HV.place+'.'+HV.note+' Forecast days come from the forecast service; NASA POWER supplies observed past days (it is not a forecast).';
+ const J=D.map((_,i)=>judge(D,i)), best=J.findIndex(j=>j.lvl==='g'), fh=D.map(fanHours), t=J[0];
+ let ar,en,why;
+ if(t.lvl==='g'){ar='احصد دلوقتي';en='Harvest now';why='الجو مناسب: حرارة '+D[0].tmean.toFixed(0)+' درجة ورطوبة '+D[0].rh.toFixed(0)+'% ومفيش مطر متوقع خلال 3 أيام.';}
+ else{
+  if(t.lvl==='y'){ar=best>0?'استنى '+arD(best)+' وبعدين احصد':'استنى وراقب الجو كل يوم';en=best>0?'Wait '+best+' day(s), then harvest':'Wait and re-check daily';}
+  else{ar='متحصدش دلوقتي';en='Do not harvest now';}
+  why='الرطوبة النهاردة '+D[0].rh.toFixed(0)+'%'+(best>0?' وبعد '+arD(best)+' هتبقى '+D[best].rh.toFixed(0)+'%، وده أنسب وقت للتخزين في الصومعة.':'، ومفيش يوم أخضر في الأسبوع الجاي. راجع التوقعات كل يوم.');
+ }
+ const silo=best>0?'لو حصدت دلوقتي، المراوح هتشتغل '+hrsAr(fh[0])+'. ولو استنيت '+arD(best)+': '+hrsAr(fh[best])+'.':'لو حصدت دلوقتي: '+hrsAr(fh[0])+'.';
+ HV.summary={lvl:t.lvl,en:en+(best>0&&t.lvl!=='g'?' (best day: '+D[best].date+')':'')};
+ const pi=D.findIndex(x=>x.date===HV.planned);
+ const planned=pi>=0?'<span class="dot '+J[pi].lvl+'"></span>'+LV[J[pi].lvl]+': '+J[pi].reasons.join('; '):'Outside the 7-day window, pick a date within the next week.';
+ const sel=HV.sel, ds=D[sel], fs=fh[sel];
+ const rows=D.map((d,i)=>{const dd=new Date(d.date+'T00:00:00').toLocaleDateString('en-GB',{weekday:'short',day:'2-digit',month:'short'});
+  return `<tr class="rowc ${i===sel?'sel':''}" data-i="${i}"><td><span class="dot ${J[i].lvl}"></span>${dd}${i===best?' (best)':''}</td><td>${d.tmean.toFixed(0)} / ${d.tmax.toFixed(0)}</td><td>${d.rh.toFixed(0)} / ${d.rhmin.toFixed(0)}</td><td>${d.rain.toFixed(1)} / ${d.prob}%</td><td>${d.wind.toFixed(1)}</td><td>${J[i].reasons.join('; ')}</td></tr>`;}).join('');
+ const pw=HV.power.length?HV.power.map(p=>`<tr><td>${p.date}</td><td>${(+p.T).toFixed(1)}</td><td>${(+p.RH).toFixed(0)}</td><td>${(+p.P).toFixed(1)}</td><td>${(+p.W).toFixed(1)}</td></tr>`).join(''):'<tr><td colspan="5">No NASA POWER data loaded (use the Live source).</td></tr>';
+ out.innerHTML=`<div class="dc ${t.lvl}"><div class="rtl"><h3>${ar}</h3><p>${why}</p><p>${silo}</p></div><p style="color:var(--mut)"><b>${en}.</b> ${t.reasons.join('; ')}.</p>
+  <p>Your planned date (${HV.planned||'-'}): ${planned}</p></div>
+ <div class="pan"><h4>2. Seven-day outlook (tap a row to choose the day for the silo)</h4>
+  <div style="overflow:auto"><table class="t"><tr><th>Day</th><th>Temp mean / max C</th><th>RH mean / min %</th><th>Rain mm / chance</th><th>Wind m/s</th><th>Why</th></tr>${rows}</table></div>
+  <canvas id="hChart" style="width:100%;height:170px;display:block;margin-top:8px"></canvas></div>
+ <div class="pan" style="margin-top:12px"><h4>3. Link to the seed line and silo</h4>
+  <p>Selected day: <b>${ds.date}</b>. Estimated grain moisture at harvest: <b>${fs.M0.toFixed(1)}%</b>. Estimated fan runtime to reach 12.5%: <b>${fs.hours==null?'drying not possible with this air':fs.hours<0.5?'none needed':Math.round(fs.hours)+' h'}</b>.</p>
+  <p class="note">Assumptions: harvest moisture is the air equilibrium moisture plus 1.5%; drying uses the afternoon (lowest) humidity and the same drying rate as the silo simulation. These are model estimates, not measurements.</p>
+  <button class="btn go" id="hLoad">Send this day to the Seed Line</button></div>
+ <div class="grid2"><div class="pan"><h4>NASA POWER observed (recent days)</h4><div style="overflow:auto"><table class="t"><tr><th>Date</th><th>T2M C</th><th>RH2M %</th><th>Rain mm</th><th>Wind m/s</th></tr>${pw}</table></div></div>
+ <div class="pan"><h4>Decision rules</h4><table class="t"><tr><td><span class="dot g"></span>Harvest now</td><td>Mean 25-35 C, RH under 55%, no rain for 3 days</td></tr><tr><td><span class="dot y"></span>Wait</td><td>RH 55-70%, small rain chance, or mean temperature outside 25-35 C</td></tr><tr><td><span class="dot r"></span>Do not harvest</td><td>RH over 70%, rain expected, or max temperature over 40 C</td></tr></table><p class="note">Default thresholds from the project design, not an official agronomic standard.</p></div></div>`;
+ out.querySelectorAll('tr.rowc').forEach(r=>r.onclick=()=>{HV.sel=+r.dataset.i;renderHarvest();});
+ $('#hLoad').onclick=()=>loadHarvest(HV.sel);
+ drawHChart(J);
+}
+function drawHChart(J){
+ const cv=$('#hChart'); if(!cv||!cv.clientWidth)return; const D=HV.days,dpr=devicePixelRatio||1,w=cv.clientWidth,h=cv.clientHeight;
+ cv.width=w*dpr;cv.height=h*dpr;const c=cv.getContext('2d');c.scale(dpr,dpr);
+ const L=34,R=10,T=10,B=22,pw=w-L-R,ph=h-T-B,y=v=>T+ph*(1-v/100),n=D.length,cw=pw/n;
+ J.forEach((j,i)=>{c.fillStyle={g:'rgba(111,208,140,.18)',y:'rgba(227,182,79,.18)',r:'rgba(255,106,85,.18)'}[j.lvl];c.fillRect(L+i*cw,T,cw,ph);});
+ c.strokeStyle='#245160';c.fillStyle='#8db0b9';c.font='11px Segoe UI,Tahoma,sans-serif';c.textAlign='right';
+ [0,25,50,75,100].forEach(v=>{c.beginPath();c.moveTo(L,y(v));c.lineTo(L+pw,y(v));c.stroke();c.fillText(v,L-4,y(v)+4);});
+ [[55,'#e3b64f'],[70,'#ff6a55']].forEach(a=>{c.strokeStyle=a[1];c.setLineDash([5,4]);c.beginPath();c.moveTo(L,y(a[0]));c.lineTo(L+pw,y(a[0]));c.stroke();c.setLineDash([]);});
+ [['rh','#49c2ff'],['rhmin','#8db0b9']].forEach(s=>{c.strokeStyle=s[1];c.lineWidth=2;c.beginPath();D.forEach((d,i)=>{const x=L+cw*(i+0.5);i?c.lineTo(x,y(d[s[0]])):c.moveTo(x,y(d[s[0]]));});c.stroke();});
+ c.textAlign='center';c.fillStyle='#8db0b9';D.forEach((d,i)=>c.fillText(d.date.slice(5),L+cw*(i+0.5),h-6));
+ c.textAlign='left';c.fillStyle='#49c2ff';c.fillText('RH mean %',L+6,T+12);c.fillStyle='#8db0b9';c.fillText('RH min %',L+86,T+12);
+}
+function loadHarvest(i){
+ const d=HV.days[i], f=fanHours(d);
+ S.ambTmean=clamp(d.tmean,10,45); S.ambRHmean=clamp(d.rh,10,90); S.daily=true; S.inM=clamp(+f.M0.toFixed(1),8,20);
+ toast('info','Harvest day sent to the seed line','Incoming seed moisture '+S.inM+'%. Outside air is now '+d.tmean.toFixed(0)+' C and '+d.rh.toFixed(0)+'% RH. Start a batch.');
+ syncUI(); location.hash='#line';
+}
+
+/* ---------- Soil Lab ---------- */
+function buildSoilUI(){
+ const M=[['Soil fertility','خصوبة التربة',35,8,'+35%','+8%'],['Water retention','احتفاظ بالمياه',28,10,'+28%','+10%'],['Crop quality','جودة المحصول',32,12,'+32%','+12%'],['Cost','التكلفة',25,20,'-25% (cheaper)','+20% (costlier)'],['Chemical fertilizer use','تقليل الأسمدة الكيميائية',60,0,'-60%','no reduction']];
+ const bars=M.map(m=>`<div class="mrow"><div><b>${m[0]}</b><br><span dir="rtl" style="color:var(--mut)">${m[1]}</span></div><div class="bars"><div class="bar b" style="width:${Math.max(14,m[2]/60*100)}%">Bio: ${m[4]}</div><div class="bar c" style="width:${Math.max(14,m[3]/60*100)}%">Chemical: ${m[5]}</div></div></div>`).join('');
+ $('#viewSoil').innerHTML=`<div class="pgin"><h2>Soil Lab <span dir="rtl" style="color:var(--gold)">معمل التربة</span></h2>
+ <p class="sub">Stage 1 of the project: waste-derived nano materials plus two friendly fungi protect the soil and replace most chemical inputs.</p>
+ <div class="chain">
+  <div class="pan"><h4>1. Soil <span dir="rtl">التربة</span></h4><p class="note">Nano from waste + Trichoderma + Pythium oligandrum.</p><a class="btn go" href="#soil">You are here</a></div>
+  <div class="pan"><h4>2. NASA Harvest <span dir="rtl">الحصاد</span></h4><p class="note">Decide the harvest day from weather data.</p><a class="btn" href="#harvest" style="display:inline-block;text-decoration:none">Open</a></div>
+  <div class="pan"><h4>3. Seed line + silo <span dir="rtl">التعقيم والتغليف والصومعة</span></h4><p class="note">Sterilize, coat, then store.</p><a class="btn" href="#line" style="display:inline-block;text-decoration:none">Open</a></div></div>
+ <div class="pan" style="margin-top:12px"><h4>Comparison: nano-bio + fungi vs chemical</h4><p class="note">Improvement versus untreated soil.</p>${bars}
+  <div class="mrow"><div><b>Environmental safety</b><br><span dir="rtl" style="color:var(--mut)">الأمان البيئي</span></div><div class="bars"><div class="bar b" style="width:100%">Bio: high / safe</div><div class="bar c" style="width:40%">Chemical: pollution risk</div></div></div>
+  <div class="mrow"><div><b>Overall crop quality index</b><br><span dir="rtl" style="color:var(--mut)">مؤشر جودة المحصول</span></div><div class="bars"><div class="bar b" style="width:92%">Bio + nano + fungi: 92%</div><div class="bar c" style="width:55%">Chemical: 55%</div></div></div>
+  <p style="margin:6px 0"><b>Quality gain: +37 points.</b></p>
+  <p class="note">These figures are the project's design targets from the concept sheet. They are not measured results. Confirm them with a pot or plot experiment (treated vs chemical vs untreated) before presenting them as findings.</p></div>
+ <div class="grid2">
+  <div class="pan"><h4>Trichoderma <span dir="rtl">تريكوديرما</span></h4><p>Biocontrol fungus. Colonises the root zone, competes with disease fungi for space and food, and attacks fungi such as Fusarium and Rhizoctonia. Replaces part of the soil fungicide use.</p><p class="note">Works best in moist soil rich in organic matter. Do not mix with chemical fungicides.</p></div>
+  <div class="pan"><h4>Pythium oligandrum <span dir="rtl">بيثيوم أوليجاندرم</span></h4><p>Friendly oomycete that parasitises harmful Pythium and other root-rot fungi, and triggers the plant's own defences, which helps roots take up nutrients.</p><p class="note">Needs soil moisture to be active. It acts in the soil stage; the silo stage uses Trichoderma capsules.</p></div>
+  <div class="pan"><h4>Nano from waste <span dir="rtl">نانو من المخلفات</span></h4><p>Rice-husk nano-silica (150 ppm) strengthens plant walls, nano biochar (2%) holds water and nutrients, eggshell nano-calcium (1 g/kg soil) supports roots. All come from agricultural waste.</p><p class="note">Nile-valley soils are often slightly alkaline, so test soil pH before adding eggshell calcium.</p></div>
+  <div class="pan"><h4>Use in the silo simulation</h4><p class="note">Choose the soil treatment used on the field. Assumption: biocontrol soil lowers the field-borne fungal pressure in storage by 20%.</p>
+   <div id="soilBtns"><button class="btn" data-soil="none">None</button> <button class="btn" data-soil="chem">Chemical</button> <button class="btn" data-soil="bio">Nano-bio + fungi</button></div></div>
+ </div></div>`;
+ $$('#soilBtns [data-soil]').forEach(b=>b.onclick=()=>{S.soil=b.dataset.soil;renderSoil();toast('info','Soil treatment set',b.textContent+(S.soil==='bio'?': fungal pressure in the silo model is reduced by 20% (assumption).':'.'));});
+}
+function renderSoil(){$$('#soilBtns [data-soil]').forEach(b=>b.classList.toggle('on',b.dataset.soil===S.soil));}
+
+/* ---------- Seed line: sterilize -> coat -> store ---------- */
+function predict(){
+ const kill=S.byS?0:100*(1-Math.exp(-3*Math.pow(S.vin/10,0.8)*Math.max(0,(S.vTemp-30)/30)*(S.vMin/15)));
+ let v=98; if(!S.byS)v-=0.9*Math.max(0,S.vTemp-60)*(S.vMin/15)+0.8*Math.max(0,S.vin-12)+0.1*Math.max(0,S.vMin-20);
+ if(!S.byC)v-=(S.rpm>45?0.5*(S.rpm-45):0)+(S.nano>12?0.5*(S.nano-12):0);
+ const uni=Math.exp(-Math.pow(Math.max(0,S.nano-10)/6,2));
+ const cov=S.byC?0:100*(1-Math.exp(-2.5*(S.nano/8)*(S.coatMin/10)*Math.exp(-Math.pow((S.rpm-30)/25,2))))*uni;
+ const Ms=S.inM+(S.byS?0:1.8*(S.vMin/15)*(0.5+0.5*S.vin/10));
+ const Mf=clamp(Ms-(S.byC?0:0.12*S.coatMin*(S.rpm/30)),6,22), viab=clamp(v,0,100), lim=S.stM+0.5, reasons=[];
+ if(kill<90)reasons.push(S.byS?'Sterilizer bypassed: fungi and bacteria stay on the seed':'Sterilization below 90%: raise concentration, temperature or time');
+ if(cov<85)reasons.push(S.byC?'Coater bypassed: no protective layer and no drying step':'Coating below 85%: adjust nano %, rpm or time');
+ if(viab<90)reasons.push('Seed viability below 90%: too hot, too long or too concentrated');
+ if(Mf>lim)reasons.push('Moisture '+Mf.toFixed(1)+'% is above the '+lim.toFixed(1)+'% storage limit');
+ return {kill,cov,viab,Mf,Ms,reasons,pass:reasons.length===0,mins:(S.byS?0:S.vMin)+2+(S.byC?0:S.coatMin)+3};
+}
+function startBatch(){
+ if(L.stage!=='idle'){toast('warn','Line busy','A batch is already running.');return false;}
+ if(S.fill>=0.94){toast('warn','Silo full','Empty or discharge some grain before starting a new batch.');return false;}
+ const p=predict(); L.batch=Object.assign({n:++L.n,kg:S.batchKg,t:S.t},p); L.seq=[];
+ if(!S.byS)L.seq.push(['ster',S.vMin]); L.seq.push(['x1',2]); if(!S.byC)L.seq.push(['coat',S.coatMin]); L.seq.push(['x2',3]);
+ L.si=0; L.stage=L.seq[0][0]; L.dur=Math.max(0.5,L.seq[0][1]); L.tIn=0;
+ toast('info','Batch #'+L.n+' started',S.batchKg+' kg: '+(S.byS?'no sterilizing':'sterilize')+', '+(S.byC?'no coating':'coat')+', then store.');
+ return true;
+}
+function lineStep(dt){
+ if(L.stage==='idle'){ if(S.autoLine&&S.t-L.lastEnd>=S.autoGap&&S.fill<0.94)startBatch(); return; }
+ L.tIn+=dt;
+ while(L.stage!=='idle'&&L.tIn>=L.dur){ L.tIn-=L.dur; L.si++; if(L.si>=L.seq.length){finishBatch();}else{L.stage=L.seq[L.si][0];L.dur=Math.max(0.5,L.seq[L.si][1]);} }
+}
+function finishBatch(){
+ const b=L.batch; L.stage='idle'; L.lastEnd=S.t; let res;
+ const stock=S.fill*S.siloCap, room=Math.max(0,0.95*S.siloCap-stock);
+ if(!b.pass&&S.rejectFail){res='Rejected';L.rejected++;toast('crit','Batch #'+b.n+' rejected',b.reasons.join('. ')+'.');}
+ else if(room<0.5){res='Silo full';L.rejected++;toast('warn','Batch #'+b.n+' not stored','The silo is full.');}
+ else{
+  const add=Math.min(b.kg,room), tot=stock+add;
+  S.M=clamp((S.M*stock+b.Mf*add)/tot,6,26); S.coat=(S.coat*stock+b.cov*add)/tot; S.F=Math.min(100,S.F+(1-b.kill/100)*25*add/tot);
+  S.fill=tot/S.siloCap; applyFill(); L.stored+=add; res=b.pass?'Stored':'Stored (below spec)';
+  toast(b.pass?'info':'warn','Batch #'+b.n+' stored','+'+add.toFixed(0)+' kg. Silo moisture is now '+S.M.toFixed(1)+'% and coating on stock '+S.coat.toFixed(0)+'%.');
+ }
+ L.log.unshift({n:b.n,kg:b.kg,kill:b.kill,cov:b.cov,viab:b.viab,Mf:b.Mf,pass:b.pass,res}); if(L.log.length>40)L.log.pop();
+}
+function batchTable(){
+ if(!L.log.length)return '<p class="note">No batches yet. Start one on the Seed Line screen.</p>';
+ return '<table class="t"><tr><th>#</th><th>kg</th><th>Kill</th><th>Coat</th><th>Viab.</th><th>Moist.</th><th>Result</th></tr>'+L.log.map(b=>`<tr><td>${b.n}</td><td>${b.kg}</td><td>${b.kill.toFixed(0)}%</td><td>${b.cov.toFixed(0)}%</td><td>${b.viab.toFixed(0)}%</td><td>${b.Mf.toFixed(1)}%</td><td class="${b.res==='Stored'?'ok':'bad'}">${b.res}</td></tr>`).join('')+'</table>';
+}
+function stageState(which){
+ const bypass=which==='ster'?S.byS:S.byC;
+ if(bypass)return {t:'<span class="warnc">Bypassed (test)</span>',p:0};
+ if(L.stage===which)return {t:'<span class="ok">Running</span> '+(STG[which]),p:L.tIn/L.dur*100};
+ if(L.stage==='idle')return {t:'Idle',p:0};
+ const o=L.seq.map(x=>x[0]), cur=o.indexOf(L.stage), me=o.indexOf(which);
+ return me>=0&&me<cur?{t:'<span class="ok">Done</span>',p:100}:{t:'Waiting',p:0};
+}
+function renderLine(){
+ const q=$('#lPred'); if(!q)return; const p=predict();
+ const row=(l,v,ok)=>`<tr><td>${l}</td><td class="${ok?'ok':'bad'}">${v}</td></tr>`;
+ q.innerHTML='<table class="t">'+row('Sterilization efficacy',p.kill.toFixed(0)+' % (need 90)',p.kill>=90)+row('Coating coverage',p.cov.toFixed(0)+' % (need 85)',p.cov>=85)+row('Seed viability',p.viab.toFixed(0)+' % (need 90)',p.viab>=90)+row('Moisture entering silo',p.Mf.toFixed(1)+' % (limit '+(S.stM+0.5).toFixed(1)+')',p.Mf<=S.stM+0.5)+'<tr><td>Batch time</td><td>'+p.mins+' min</td></tr></table>'+
+  (p.pass?'<p class="ok"><b>Batch will pass.</b> It can be stored.</p>':'<p class="bad"><b>Batch will fail:</b></p><ul>'+p.reasons.map(r=>'<li>'+r+'</li>').join('')+'</ul>');
+ const a=stageState('ster'), b=stageState('coat');
+ $('#lst1').innerHTML=a.t; $('#lp1').style.width=a.p+'%'; $('#lst2').innerHTML=b.t; $('#lp2').style.width=b.p+'%';
+ $('#lst3').innerHTML=(L.stage==='x2'?'<span class="ok">Receiving seeds</span> | ':'')+'Level '+(S.fill*100).toFixed(0)+'% ('+(S.fill*S.siloCap).toFixed(0)+' kg), moisture '+S.sM.toFixed(1)+'%'; $('#lp3').style.width=(S.fill*100)+'%';
+ $('#lLog').innerHTML=batchTable();
+}
+function buildHome(){
+ const lk=(href,n,t,ar)=>`<a class="pan lk" href="${href}"><h4>${n}. ${t} <span dir="rtl" style="color:var(--gold)">${ar}</span></h4><div id="o${n}"></div></a>`;
+ $('#viewHome').innerHTML=`<div class="pgin"><h2>SG-S20 Complete Seed &amp; Grain System <span dir="rtl" style="color:var(--gold)">المنظومة المتكاملة</span></h2>
+ <p class="sub">One connected chain: treat the soil, choose the harvest day from NASA data, <b>sterilize, coat, then store</b> in the smart silo. Tap a stage to open it.</p>
+ <div class="chain5">${lk('#soil',1,'Soil Lab','التربة')}${lk('#harvest',2,'NASA Harvest','الحصاد')}${lk('#line',3,'Sterilizer','التعقيم')}${lk('#line',4,'Rotary coater','التغليف')}${lk('#silo',5,'Smart silo','الصومعة')}</div>
+ <div class="pan"><h4>Live status</h4><div id="hStat" class="fm"></div></div>
+ <div class="pan" style="margin-top:12px"><h4>Three-minute demo</h4><ol class="steps">
+  <li><b>NASA Harvest:</b> press <i>Get data &amp; advise</i> (or pick a sample), read the colour card, then <i>Send this day to the Seed Line</i>.</li>
+  <li><b>Seed Line:</b> press <i>Watch slowly</i> then <i>Start batch</i>. Edit any box (for example wood vinegar 10% or nano 8%) and see the predicted quality change.</li>
+  <li><b>Silo 3D:</b> tap the numbers 1-11. 8 and 9 are the sterilizer and coater, 10 the rotary valve, 11 the stirrer.</li>
+  <li><b>Faults &amp; care:</b> load a scenario such as <i>Skip the sterilizer</i> or <i>Fans fail in humid weather</i>.</li>
+  <li><b>Live IoT Dashboard</b> and <b>Reports</b>: see the charts, alerts and batch log.</li></ol></div></div>`;
+}
+function renderHome(){
+ if(!$('#o1'))return;
+ const dot=c=>'<span class="dot '+c+'"></span>', p=predict();
+ $('#o1').innerHTML={none:dot('y')+'No treatment chosen',chem:dot('y')+'Chemical fertilizer + fungicide',bio:dot('g')+'Nano from waste + Trichoderma + P. oligandrum'}[S.soil];
+ $('#o2').innerHTML=HV.summary?dot(HV.summary.lvl)+HV.summary.en+'<div class="big">'+HV.src+'</div>':dot('y')+'Not run yet';
+ $('#o3').innerHTML=dot(S.byS?'r':L.stage==='ster'?'y':'g')+S.vin+'% wood vinegar, '+S.vTemp+' C, '+S.vMin+' min'+'<div class="big">'+(S.byS?'Bypassed':'Predicted kill '+p.kill.toFixed(0)+'%')+'</div>';
+ $('#o4').innerHTML=dot(S.byC?'r':L.stage==='coat'?'y':'g')+S.nano+'% nano, '+S.rpm+' rpm, '+S.coatMin+' min'+'<div class="big">'+(S.byC?'Bypassed':'Predicted coverage '+p.cov.toFixed(0)+'%')+'</div>';
+ const bad=S.F>70?'r':(S.F>35||S.alertMode)?'y':'g';
+ $('#o5').innerHTML=dot(bad)+'Moisture '+S.sM.toFixed(1)+'% (target '+S.stM+'%)<div class="big">Fungal risk '+S.F.toFixed(0)+'/100, level '+(S.fill*100).toFixed(0)+'%, '+Object.values(act).filter(Boolean).length+' active alert(s)</div>';
+ const chip=(l,v)=>`<div class="chip"><small>${l}</small><b>${v}</b></div>`;
+ $('#hStat').innerHTML=chip('Batches stored',L.n-L.rejected)+chip('Batches rejected',L.rejected)+chip('Seed added to silo',L.stored.toFixed(0)+' kg')+chip('Coating on stock',S.coat.toFixed(0)+' %')+chip('Battery',S.soc.toFixed(0)+' %')+chip('Sim time',fmtClock(S.t));
+}
+function renderChain(){
+ const el=$('#dChain'); if(el){
+  const so={none:'No soil treatment selected',chem:'Chemical fertilizer + fungicide',bio:'Nano from waste + Trichoderma + Pythium oligandrum'}[S.soil];
+  const hv=HV.summary?'<span class="'+(HV.summary.lvl==='g'?'ok':HV.summary.lvl==='y'?'warnc':'bad')+'">'+HV.summary.en+'</span> ('+HV.src+')':'Not run yet';
+  const lb=L.log[0]?('Batch #'+L.log[0].n+': '+L.log[0].res+' (kill '+L.log[0].kill.toFixed(0)+'%, coat '+L.log[0].cov.toFixed(0)+'%)'):'No batch run yet';
+  const sv=S.F>70?'<span class="bad">Serious mould risk</span>':(S.F>35||S.alertMode)?'<span class="warnc">Under stress</span>':'<span class="ok">Grain stored safely</span>';
+  el.innerHTML='<table class="t"><tr><td>1. Soil treatment</td><td>'+so+'</td></tr><tr><td>2. NASA harvest advice</td><td>'+hv+'</td></tr><tr><td>3. Sterilize + coat</td><td>'+lb+'</td></tr><tr><td>4. Silo now</td><td>'+sv+' (moisture '+S.sM.toFixed(1)+'%, fungal index '+S.F.toFixed(0)+')</td></tr></table>';
+ }
+ const bt=$('#dBatch'); if(bt)bt.innerHTML=batchTable();
+}
+
+/* ---------- start ---------- */
+applyFill(); step(0); S.nasaIdx=Math.floor(S.t/360); nlog('NASA sync started (simulated samples). Use the button above for real POWER data.'); nasaSim();
+H.length=0; buildHarvestUI(); buildSoilUI(); buildHome(); syncUI(); refreshHUD(); route(); resize(); placeCam();
+setInterval(refreshHUD,250);
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>
